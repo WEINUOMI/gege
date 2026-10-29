@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 字体（按需，系统字体时省略；只能用 Google 字体，CSS 地址前缀：https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影（暖调低透明） === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    /* 纯 CSS 滚动条美化，用于聊天区等 */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件，不需要的页面则不要复制此段（从 @nav:start 到 @nav:end） -->
+  <!-- ===== 一级页：顶部 Header（无返回，优雅标题） ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary">
+        <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+      </div>
+      <h1 class="font-display text-lg font-semibold tracking-wide text-on-surface">暖暖 · 陪跑</h1>
+    </div>
+    <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <i data-lucide="bell" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <!-- ===== 二级页：顶部 Header（带返回按钮），需要时由子 Agent 替换 ===== -->
+  <!--
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </button>
+    <h1 class="font-display text-base font-semibold text-on-surface">页面标题</h1>
+    <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container transition-colors">
+      <i data-lucide="ellipsis-vertical" class="w-5 h-5"></i>
+    </button>
+  </header>
+  -->
+
+  <main class="flex-1 overflow-y-auto pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+    <!-- @main-content:start -->
+    <!-- @main-content:end -->
+  </main>
+
+  <!-- ===== 底部 TabBar（一级页专用，二级页删除） ===== -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-surface
+              flex justify-around items-center h-14 pb-[env(safe-area-inset-bottom)] border-t border-outline-variant/20">
+    <a href="home.html" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-primary" aria-current="page">
+      <i data-lucide="message-circle-heart" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">暖心对话</span>
+    </a>
+    <a href="profile.html" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-on-surface-variant hover:text-on-surface transition-colors">
+      <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">健康管理</span>
+    </a>
+  </nav>
+
+  <!-- @nav:end 导航组件，不需要的页面则不要复制此段 -->
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

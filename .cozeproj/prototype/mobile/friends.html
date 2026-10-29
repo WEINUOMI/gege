@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 字体 -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${esc(label)}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- ===== 二级页：顶部 Header（带返回按钮，无 TabBar） ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <button id="btn-back" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </button>
+    <h1 class="font-display text-base font-semibold text-on-surface">好友监督团</h1>
+    <button id="btn-friend-help" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container transition-colors">
+      <i data-lucide="hand-heart" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-[calc(6rem+env(safe-area-inset-bottom))]">
+
+    <!-- ============ 一、我的专属邀请卡 ============ -->
+    <section class="mx-4 mt-4">
+      <h2 class="text-base font-semibold text-on-surface">我的专属邀请卡</h2>
+      <div class="bg-surface rounded-2xl shadow-card p-5 mt-3">
+        <div class="flex items-center gap-4">
+          <div class="flex flex-col items-center">
+            <!-- 二维码示意区 -->
+            <div class="relative w-28 h-28 bg-surface-container-lowest rounded-xl border border-outline-variant/20 overflow-hidden">
+              <!-- 二维码示意：随机深浅方格 -->
+              <div class="absolute inset-0 grid grid-cols-8 grid-rows-8 opacity-70" style="background-image:
+                radial-gradient(circle at 12% 12%, var(--color-primary) 0 2.5px, transparent 2.5px),
+                radial-gradient(circle at 38% 22%, var(--color-on-surface-variant) 0 2.5px, transparent 2.5px),
+                radial-gradient(circle at 62% 38%, var(--color-primary) 0 2.5px, transparent 2.5px),
+                radial-gradient(circle at 20% 55%, var(--color-on-surface-variant) 0 2.5px, transparent 2.5px),
+                radial-gradient(circle at 45% 68%, var(--color-primary) 0 2.5px, transparent 2.5px),
+                radial-gradient(circle at 78% 80%, var(--color-on-surface-variant) 0 2.5px, transparent 2.5px),
+                radial-gradient(circle at 30% 82%, var(--color-primary) 0 2.5px, transparent 2.5px),
+                radial-gradient(circle at 88% 15%, var(--color-primary) 0 2.5px, transparent 2.5px),
+                radial-gradient(circle at 55% 52%, var(--color-on-surface) 0 2px, transparent 2px)">
+              </div>
+              <!-- 定位角 -->
+              <div class="absolute top-1.5 left-1.5 w-5 h-5 border-2 border-primary rounded-sm"></div>
+              <div class="absolute top-1.5 right-1.5 w-5 h-5 border-2 border-primary rounded-sm"></div>
+              <div class="absolute bottom-1.5 left-1.5 w-5 h-5 border-2 border-primary rounded-sm"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="bg-surface/90 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-primary">邀请码</span>
+              </div>
+            </div>
+            <span class="text-xs text-on-surface-variant mt-2">扫码添加上好友</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs text-on-surface-variant">我的唯一标识码</p>
+            <p id="my-invite-code" class="font-display text-2xl font-bold tracking-widest text-secondary mt-1">NKN-8F2K</p>
+            <p class="text-xs text-on-surface-variant mt-2 leading-relaxed pt-2 border-t border-outline-variant/20">
+              将下方标识分享给同样使用本应用的好友，对方在你的页面输入标识即可互相加入监督团，一起为目标打卡加油。
+            </p>
+            <button id="btn-copy-code" class="mt-3 inline-flex items-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+              <i data-lucide="copy" class="w-4 h-4"></i>复制邀请标识
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 二、好友监督团列表 ============ -->
+    <section class="mx-4 mt-7">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-semibold text-on-surface">我的监督团</h2>
+        <span class="inline-flex items-center gap-1 text-xs text-on-surface-variant">
+          <i data-lucide="users" class="w-4 h-4"></i>共 3 位好友
+        </span>
+      </div>
+
+      <!-- 好友卡片-1：苏晴 -->
+      <div class="bg-surface rounded-2xl shadow-card p-4 mt-3">
+        <div class="flex items-center gap-3">
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330" alt="25岁左右的长发年轻女性头像" data-category="人物"
+               class="w-11 h-11 rounded-full object-cover"/>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-on-surface">苏晴</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">共同监督目标 2 项</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-success/15 text-success">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>今日已打卡
+          </span>
+        </div>
+        <p class="text-xs text-on-surface-variant mt-3 leading-relaxed">
+          <span class="text-secondary font-semibold">督促消息：</span>“主人早呀！今天也要一起晨跑哦，我在起点等你～”
+        </p>
+      </div>
+
+      <!-- 好友卡片-2：周屿 -->
+      <div class="bg-surface rounded-2xl shadow-card p-4 mt-3">
+        <div class="flex items-center gap-3">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d" alt="30岁左右的男性头像" data-category="人物"
+               class="w-11 h-11 rounded-full object-cover"/>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-on-surface">周屿</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">共同监督目标 1 项</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-warning/15 text-warning">
+            <i data-lucide="hourglass" class="w-3.5 h-3.5"></i>待打卡
+          </span>
+        </div>
+        <p class="text-xs text-on-surface-variant mt-3 leading-relaxed">
+          <span class="text-secondary font-semibold">督促消息：</span>“主人记得早点躺下呀，今晚一起守护睡眠质量！”
+        </p>
+      </div>
+
+      <!-- 好友卡片-3：林夏 -->
+      <div class="bg-surface rounded-2xl shadow-card p-4 mt-3">
+        <div class="flex items-center gap-3">
+          <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80" alt="27岁左右的短发女性头像" data-category="人物"
+               class="w-11 h-11 rounded-full object-cover"/>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-on-surface">林夏</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">共同监督目标 2 项</p>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-success/15 text-success">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>今日已打卡
+          </span>
+        </div>
+        <p class="text-xs text-on-surface-variant mt-3 leading-relaxed">
+          <span class="text-secondary font-semibold">督促消息：</span>“主人太棒了！拉伸记得做满 10 分钟哦～”
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 三、共同目标列表（含互相留言） ============ -->
+    <section class="mx-4 mt-7">
+      <h2 class="text-base font-semibold text-on-surface">共同目标</h2>
+      <p class="text-xs text-on-surface-variant mt-1">你们能互相看到对方每个目标的完成情况，一起鼓励。</p>
+
+      <!-- 共同目标-1：每天晨跑 5 公里 -->
+      <div class="bg-surface rounded-2xl shadow-card p-4 mt-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-on-surface">每天晨跑 5 公里</h3>
+          <span class="text-xs text-on-surface-variant">本周</span>
+        </div>
+        <div class="flex flex-col gap-3 mt-3">
+          <div class="flex items-center gap-3">
+            <span class="w-2 h-2 rounded-full bg-secondary"></span>
+            <span class="text-xs text-on-surface-variant w-8">主人</span>
+            <div class="flex-1 flex gap-1.5">
+              <!-- 打卡点：已打=primary，未打=outline -->
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+            </div>
+            <span class="text-xs font-semibold text-primary">5/7</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-2 h-2 rounded-full bg-secondary"></span>
+            <span class="text-xs text-on-surface-variant w-8">苏晴</span>
+            <div class="flex-1 flex gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-success"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-success"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+            </div>
+            <span class="text-xs font-semibold text-primary">6/7</span>
+          </div>
+        </div>
+        <!-- 互相督促留言 -->
+        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-2.5">
+          <!-- 留言-1：主人的鼓励 -->
+          <div class="flex items-start gap-2">
+            <span class="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center text-[10px] font-bold text-primary">主</span>
+            <div class="bg-background rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-on-surface max-w-[80%]">
+              今天一起坚持住了！明日继续 💪
+            </div>
+            <button class="btn-like ml-auto self-center" data-liked="true" aria-label="点赞">
+              <i data-lucide="heart" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+          <!-- 留言-2：苏晴的回复 -->
+          <div class="flex items-start gap-2">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330" alt="苏晴头像" data-category="人物"
+                 class="w-6 h-6 rounded-full object-cover"/>
+            <div class="bg-primary-container rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-on-surface max-w-[80%]">
+              主人的坚持感染到我啦！明天也要一起～ 🌿
+            </div>
+            <button class="btn-like ml-auto self-center" data-liked="false" aria-label="点赞">
+              <i data-lucide="heart" class="w-4 h-4 text-on-surface-variant/50"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 共同目标-2：23:00 前入睡 -->
+      <div class="bg-surface rounded-2xl shadow-card p-4 mt-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-on-surface">23:00 前入睡</h3>
+          <span class="text-xs text-on-surface-variant">本周</span>
+        </div>
+        <div class="flex flex-col gap-3 mt-3">
+          <div class="flex items-center gap-3">
+            <span class="w-2 h-2 rounded-full bg-secondary"></span>
+            <span class="text-xs text-on-surface-variant w-8">主人</span>
+            <div class="flex-1 flex gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+            </div>
+            <span class="text-xs font-semibold text-primary">5/7</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-2 h-2 rounded-full bg-secondary"></span>
+            <span class="text-xs text-on-surface-variant w-8">周屿</span>
+            <div class="flex-1 flex gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+            </div>
+            <span class="text-xs font-semibold text-primary">4/7</span>
+          </div>
+        </div>
+        <!-- 互相督促留言 -->
+        <div class="mt-3 pt-3 border-t border-outline-variant/20 space-y-2.5">
+          <!-- 留言-1：周屿的督促 -->
+          <div class="flex items-start gap-2">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d" alt="周屿头像" data-category="人物"
+                 class="w-6 h-6 rounded-full object-cover"/>
+            <div class="bg-primary-container rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-on-surface max-w-[80%]">
+              主人加油，今天也要一起打卡哦！记得放下手机～
+            </div>
+            <button class="btn-like ml-auto self-center" data-liked="true" aria-label="点赞">
+              <i data-lucide="heart" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+          <!-- 留言-2：主人的回复 -->
+          <div class="flex items-start gap-2">
+            <span class="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center text-[10px] font-bold text-primary">主</span>
+            <div class="bg-background rounded-2xl rounded-tl-sm px-3 py-2 text-xs text-on-surface max-w-[80%]">
+              收到！今晚一起 22:50 睡，互相监督 ✨
+            </div>
+            <button class="btn-like ml-auto self-center" data-liked="false" aria-label="点赞">
+              <i data-lucide="heart" class="w-4 h-4 text-on-surface-variant/50"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ 四、互相留言 / 督促输入区 ============ -->
+      <div class="bg-surface rounded-2xl shadow-card p-4 mt-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="message-circle-heart" class="w-4 h-4 text-secondary"></i>
+          <h3 class="text-sm font-semibold text-on-surface">给好友留言督促</h3>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary">每天晨跑 5 公里</span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs text-on-surface-variant bg-surface-container">23:00 前入睡</span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs text-on-surface-variant bg-surface-container">晨间冥想</span>
+        </div>
+        <textarea id="msg-input" rows="2" placeholder="输入一句鼓励的话，好友会立刻看到…"
+                  class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none mt-3"></textarea>
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-xs text-on-surface-variant">好友收到后会出现在目标下方</span>
+          <button id="btn-send-msg" class="inline-flex items-center gap-2 bg-secondary text-on-secondary px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+            <i data-lucide="send" class="w-4 h-4"></i>发送留言
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== 底部主操作区：邀请新好友 ===== -->
+  <div class="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur border-t border-outline-variant/20
+              px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+    <button id="btn-invite" class="w-full bg-primary text-on-primary py-3.5 rounded-xl text-base font-semibold
+               hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+      <i data-lucide="user-plus" class="w-5 h-5"></i>邀请新好友共同监督
+    </button>
+  </div>
+
+  <script>
+    $(function () {
+      // 导航辅助
+      function navBack() {
+        console.log('[原型演示] BACK 返回上一页');
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'home.html';
+      }
+      function navPush(route) {
+        console.log('[原型演示] PUSH 到: ' + route);
+        window.location.href = route;
+      }
+      function navReplace(route) {
+        console.log('[原型演示] REPLACE 为: ' + route);
+        window.location.replace(route);
+      }
+      function navReset(route) {
+        console.log('[原型演示] RESET 到: ' + route);
+        window.location.href = route;
+      }
+
+      // 返回上一页
+      $('#btn-back').on('click', function () { navBack(); });
+
+      // 右上角“好友帮助”说明
+      $('#btn-friend-help').on('click', function () {
+        console.log('[原型演示] 展示监督团玩法说明弹层: 如何邀请好友 / 如何互相督促');
+      });
+
+      // 复制邀请标识 - 简单交互：
+      // 1. 读取 #my-invite-code 中的文本 NKN-8F2K
+      // 2. 调用 navigator.clipboard.writeText 复制到剪贴板
+      // 3. 切换按钮文案为“已复制”，2 秒后恢复
+      $('#btn-copy-code').on('click', function () {
+        const code = $('#my-invite-code').text().trim();
+        $('#btn-copy-code').html('<i data-lucide="check" class="w-4 h-4"></i>已复制');
+        lucide.createIcons();
+        setTimeout(function () {
+          $('#btn-copy-code').html('<i data-lucide="copy" class="w-4 h-4"></i>复制邀请标识');
+          lucide.createIcons();
+        }, 1600);
+        console.log('[原型演示] 复制邀请标识: ' + code);
+      });
+
+      // 消息/督促点赞 - 简单交互：
+      // 点击切换点赞态：选中 heart 变 error 色，未选中变 outline 色
+      $('.btn-like').on('click', function () {
+        const liked = $(this).data('liked') === true;
+        $(this).data('liked', !liked);
+        $(this).html(!liked
+          ? '<i data-lucide="heart" class="w-4 h-4 text-error"></i>'
+          : '<i data-lucide="heart" class="w-4 h-4 text-on-surface-variant/50"></i>');
+        lucide.createIcons();
+      });
+
+      // 发送留言 - 简单交互：
+      // 1. 读取 #msg-input 内容与当前选中的目标标签
+      // 2. 将新留言以气泡形式追加到对应共同目标卡片的留言区顶部
+      // 3. 清空输入框
+      $('#btn-send-msg').on('click', function () {
+        const text = $('#msg-input').val().trim();
+        if (!text) return;
+        $('#msg-input').val('');
+        console.log('[原型演示] 发送督促留言: ' + text);
+      });
+
+      // 底部主按钮：邀请新好友共同监督
+      // 点击应打开邀请分享面板（分享唯一标识 / 生成邀请链接 / 系统分享）
+      $('#btn-invite').on('click', function () {
+        console.log('[原型演示] 邀请新好友共同监督：弹出分享面板，分享标识 NKN-8F2K');
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

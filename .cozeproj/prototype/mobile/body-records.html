@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1, user-scalable=no" />
+
+  <!-- 字体（按需，系统字体时省略；只能用 Google 字体，CSS 地址前缀：https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影（暖调低透明） === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- ===== 二级页：顶部 Header（带返回按钮） ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <button id="btn-back" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </button>
+    <h1 class="font-display text-base font-semibold text-on-surface">身体状况记录</h1>
+    <button id="btn-more" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container transition-colors">
+      <i data-lucide="ellipsis-vertical" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+
+    <!-- ===== 问候 + 用途说明（疗愈风） ===== -->
+    <section class="px-4 pt-2">
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center text-primary">
+            <i data-lucide="leaf" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h2 class="font-display text-base font-semibold text-on-surface">主人，欢迎回来</h2>
+            <p class="text-xs text-on-surface-variant mt-0.5">在这里记下身体的小信号，我们陪您慢慢变好</p>
+          </div>
+        </div>
+        <div class="mt-4 bg-background rounded-lg p-3 flex items-start gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4 text-secondary mt-0.5 shrink-0"></i>
+          <p class="text-xs text-on-surface-variant leading-relaxed">这些信息仅用于为您科学推荐饮食与运动方案，助您养成健康的生活方式，安心记录即可。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 基础信息（可手动修改） ===== -->
+    <section class="px-4 mt-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display text-base font-semibold text-on-surface">基础信息</h3>
+        <span class="text-xs text-on-surface-variant">点击可修改</span>
+      </div>
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <div class="grid grid-cols-2 gap-3">
+          <!-- 身高 -->
+          <div>
+            <label class="text-xs text-on-surface-variant mb-1.5 block">身高</label>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <input id="input-height" type="text" value="165" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="身高"/>
+              <span class="text-xs text-on-surface-variant shrink-0 ml-1">cm</span>
+            </div>
+          </div>
+          <!-- 体重 -->
+          <div>
+            <label class="text-xs text-on-surface-variant mb-1.5 block">体重</label>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <input id="input-weight" type="text" value="56.4" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="体重"/>
+              <span class="text-xs text-on-surface-variant shrink-0 ml-1">kg</span>
+            </div>
+          </div>
+          <!-- 年龄 -->
+          <div>
+            <label class="text-xs text-on-surface-variant mb-1.5 block">年龄</label>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <input id="input-age" type="text" value="26" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="年龄"/>
+              <span class="text-xs text-on-surface-variant shrink-0 ml-1">岁</span>
+            </div>
+          </div>
+          <!-- 性别：选择框 -->
+          <div>
+            <label class="text-xs text-on-surface-variant mb-1.5 block">性别</label>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <select id="select-gender" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none appearance-none" aria-label="性别">
+                <option>女</option>
+                <option>男</option>
+                <option>不便透露</option>
+              </select>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 shrink-0 ml-1"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 常用健康指标（多维度） ===== -->
+    <section class="px-4 mt-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display text-base font-semibold text-on-surface">健康指标</h3>
+        <button id="btn-add-metric" class="flex items-center gap-1 text-primary text-xs font-semibold">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>添加指标
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3" id="metric-list">
+
+        <!-- ===== 卡片-血压 ===== -->
+        <div class="bg-surface rounded-xl shadow-card p-4" id="card-bp">
+          <div id="card-bp-head" class="flex items-center gap-3 cursor-pointer">
+            <div class="w-9 h-9 rounded-full bg-secondary/15 flex items-center justify-center text-secondary shrink-0">
+              <i data-lucide="activity" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-on-surface">血压</p>
+                <span class="text-xs text-on-surface-variant">今晨 07:30</span>
+              </div>
+              <p class="text-xl font-bold text-on-surface mt-0.5">118<span class="text-sm font-medium text-on-surface-variant">/</span>76 <span class="text-xs font-medium text-on-surface-variant">mmHg</span></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-success"><i data-lucide="trending-down" class="w-5 h-5"></i></span>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 transition-transform" id="card-bp-arrow"></i>
+            </div>
+          </div>
+          <!-- 可展开输入区 -->
+          <div id="card-bp-edit" class="hidden mt-4 pt-3 border-t border-outline-variant/20">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <p class="text-xs text-on-surface-variant">点击修改当前血压记录</p>
+              <button id="btn-bp-history" class="text-primary text-xs font-semibold flex items-center gap-1">
+                历史<i data-lucide="chart-no-axes-combined" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center bg-surface-container rounded-xl px-4 py-3 flex-1">
+                <input id="input-bp-high" type="text" value="118" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="收缩压"/>
+              </div>
+              <span class="text-on-surface-variant text-sm">/</span>
+              <div class="flex items-center bg-surface-container rounded-xl px-4 py-3 flex-1">
+                <input id="input-bp-low" type="text" value="76" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="舒张压"/>
+              </div>
+              <span class="text-xs text-on-surface-variant">mmHg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 卡片-血糖 ===== -->
+        <div class="bg-surface rounded-xl shadow-card p-4" id="card-bgs">
+          <div id="card-bgs-head" class="flex items-center gap-3 cursor-pointer">
+            <div class="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary shrink-0">
+              <i data-lucide="drop" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-on-surface">血糖</p>
+                <span class="text-xs text-on-surface-variant">空腹 · 今晨 07:00</span>
+              </div>
+              <p class="text-xl font-bold text-on-surface mt-0.5">5.2 <span class="text-xs font-medium text-on-surface-variant">mmol/L</span></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-success"><i data-lucide="trending-down" class="w-5 h-5"></i></span>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 transition-transform" id="card-bgs-arrow"></i>
+            </div>
+          </div>
+          <div id="card-bgs-edit" class="hidden mt-4 pt-3 border-t border-outline-variant/20">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <p class="text-xs text-on-surface-variant">点击修改当前血糖记录</p>
+              <button id="btn-bgs-history" class="text-primary text-xs font-semibold flex items-center gap-1">
+                历史<i data-lucide="chart-no-axes-combined" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <input id="input-bgs" type="text" value="5.2" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="血糖"/>
+              <span class="text-xs text-on-surface-variant shrink-0 ml-1">mmol/L</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 卡片-血脂 ===== -->
+        <div class="bg-surface rounded-xl shadow-card p-4" id="card-lipid">
+          <div id="card-lipid-head" class="flex items-center gap-3 cursor-pointer">
+            <div class="w-9 h-9 rounded-full bg-warning/15 flex items-center justify-center text-warning shrink-0">
+              <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-on-surface">血脂</p>
+                <span class="text-xs text-on-surface-variant">体检 · 上月</span>
+              </div>
+              <p class="text-sm text-on-surface mt-1">总胆固醇 4.2 · 甘油三酯 1.1 <span class="text-xs text-on-surface-variant">mmol/L</span></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-success"><i data-lucide="trending-down" class="w-5 h-5"></i></span>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 transition-transform" id="card-lipid-arrow"></i>
+            </div>
+          </div>
+          <div id="card-lipid-edit" class="hidden mt-4 pt-3 border-t border-outline-variant/20">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <p class="text-xs text-on-surface-variant">点击修改血脂两项</p>
+              <button id="btn-lipid-history" class="text-primary text-xs font-semibold flex items-center gap-1">
+                历史<i data-lucide="chart-no-axes-combined" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+                <span class="text-xs text-on-surface-variant w-20 shrink-0">总胆固醇</span>
+                <input id="input-lipid-total" type="text" value="4.2" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="总胆固醇"/>
+                <span class="text-xs text-on-surface-variant shrink-0 ml-1">mmol/L</span>
+              </div>
+              <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+                <span class="text-xs text-on-surface-variant w-20 shrink-0">甘油三酯</span>
+                <input id="input-lipid-tg" type="text" value="1.1" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="甘油三酯"/>
+                <span class="text-xs text-on-surface-variant shrink-0 ml-1">mmol/L</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 卡片-心率 ===== -->
+        <div class="bg-surface rounded-xl shadow-card p-4" id="card-heartrate">
+          <div id="card-heartrate-head" class="flex items-center gap-3 cursor-pointer">
+            <div class="w-9 h-9 rounded-full bg-secondary/15 flex items-center justify-center text-secondary shrink-0">
+              <i data-lucide="heart" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-on-surface">心率</p>
+                <span class="text-xs text-on-surface-variant">静息 · 今晨</span>
+              </div>
+              <p class="text-xl font-bold text-on-surface mt-0.5">72 <span class="text-xs font-medium text-on-surface-variant">次/分</span></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-success"><i data-lucide="trending-down" class="w-5 h-5"></i></span>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 transition-transform" id="card-heartrate-arrow"></i>
+            </div>
+          </div>
+          <div id="card-heartrate-edit" class="hidden mt-4 pt-3 border-t border-outline-variant/20">
+            <div class="flex items-center gap-2 mb-3">
+              <p class="text-xs text-on-surface-variant">点击修改当前心率记录</p>
+            </div>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <input id="input-heartrate" type="text" value="72" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="心率"/>
+              <span class="text-xs text-on-surface-variant shrink-0 ml-1">次/分</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 卡片-体重 ===== -->
+        <div class="bg-surface rounded-xl shadow-card p-4" id="card-weight">
+          <div id="card-weight-head" class="flex items-center gap-3 cursor-pointer">
+            <div class="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary shrink-0">
+              <i data-lucide="scale" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-on-surface">体重</p>
+                <span class="text-xs text-on-surface-variant">今晨</span>
+              </div>
+              <p class="text-xl font-bold text-on-surface mt-0.5">56.4 <span class="text-xs font-medium text-on-surface-variant">kg</span></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-warning"><i data-lucide="trending-up" class="w-5 h-5"></i></span>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 transition-transform" id="card-weight-arrow"></i>
+            </div>
+          </div>
+          <div id="card-weight-edit" class="hidden mt-4 pt-3 border-t border-outline-variant/20">
+            <div class="flex items-center gap-2 mb-3">
+              <p class="text-xs text-on-surface-variant">点击修改当前体重记录</p>
+            </div>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <input id="input-weight-metric" type="text" value="56.4" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="体重"/>
+              <span class="text-xs text-on-surface-variant shrink-0 ml-1">kg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 卡片-BMI ===== -->
+        <div class="bg-surface rounded-xl shadow-card p-4" id="card-bmi">
+          <div id="card-bmi-head" class="flex items-center gap-3 cursor-pointer">
+            <div class="w-9 h-9 rounded-full bg-success/15 flex items-center justify-center text-success shrink-0">
+              <i data-lucide="gauge" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-on-surface">BMI</p>
+                <span class="text-xs text-on-surface-variant">自动换算 · 正常</span>
+              </div>
+              <p class="text-xl font-bold text-on-surface mt-0.5">20.6 <span class="text-xs font-medium text-on-surface-variant">kg/㎡</span></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-success"><i data-lucide="trending-down" class="w-5 h-5"></i></span>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 transition-transform" id="card-bmi-arrow"></i>
+            </div>
+          </div>
+          <div id="card-bmi-edit" class="hidden mt-4 pt-3 border-t border-outline-variant/20">
+            <div class="flex items-center gap-2 mb-3">
+              <p class="text-xs text-on-surface-variant">BMI 由身高与体重自动计算，无需手动修改</p>
+            </div>
+            <div class="bg-surface-container rounded-xl px-4 py-3 text-on-surface-variant text-sm">可点右上「更多」重新测量身高体重后更新</div>
+          </div>
+        </div>
+
+        <!-- ===== 卡片-体脂率 ===== -->
+        <div class="bg-surface rounded-xl shadow-card p-4" id="card-bf">
+          <div id="card-bf-head" class="flex items-center gap-3 cursor-pointer">
+            <div class="w-9 h-9 rounded-full bg-warning/15 flex items-center justify-center text-warning shrink-0">
+              <i data-lucide="percent" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-on-surface">体脂率</p>
+                <span class="text-xs text-on-surface-variant">体脂秤 · 今晨</span>
+              </div>
+              <p class="text-xl font-bold text-on-surface mt-0.5">24.5 <span class="text-xs font-medium text-on-surface-variant">%</span></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-success"><i data-lucide="trending-down" class="w-5 h-5"></i></span>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 transition-transform" id="card-bf-arrow"></i>
+            </div>
+          </div>
+          <div id="card-bf-edit" class="hidden mt-4 pt-3 border-t border-outline-variant/20">
+            <div class="flex items-center gap-2 mb-3">
+              <p class="text-xs text-on-surface-variant">点击修改当前体脂率记录</p>
+            </div>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <input id="input-bf" type="text" value="24.5" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="体脂率"/>
+              <span class="text-xs text-on-surface-variant shrink-0 ml-1">%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 卡片-腰围 ===== -->
+        <div class="bg-surface rounded-xl shadow-card p-4" id="card-waist">
+          <div id="card-waist-head" class="flex items-center gap-3 cursor-pointer">
+            <div class="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary shrink-0">
+              <i data-lucide="ruler" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-semibold text-on-surface">腰围</p>
+                <span class="text-xs text-on-surface-variant">今晨</span>
+              </div>
+              <p class="text-xl font-bold text-on-surface mt-0.5">74 <span class="text-xs font-medium text-on-surface-variant">cm</span></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-success"><i data-lucide="trending-down" class="w-5 h-5"></i></span>
+              <i data-lucide="chevron-down" class="w-4 h-4 text-on-surface-variant/60 transition-transform" id="card-waist-arrow"></i>
+            </div>
+          </div>
+          <div id="card-waist-edit" class="hidden mt-4 pt-3 border-t border-outline-variant/20">
+            <div class="flex items-center gap-2 mb-3">
+              <p class="text-xs text-on-surface-variant">点击修改当前腰围记录</p>
+            </div>
+            <div class="flex items-center bg-surface-container rounded-xl px-4 py-3">
+              <input id="input-waist" type="text" value="74" class="w-full bg-transparent border-none text-base text-on-surface focus:outline-none" aria-label="腰围"/>
+              <span class="text-xs text-on-surface-variant shrink-0 ml-1">cm</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== 历史记录（趋势列表） ===== -->
+    <section class="px-4 mt-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display text-base font-semibold text-on-surface">历史记录</h3>
+        <div class="flex items-center bg-surface-container rounded-lg px-2 py-1.5">
+          <i data-lucide="chart-no-axes-combined" class="w-4 h-4 text-on-surface-variant mr-1"></i>
+          <select id="select-history" class="bg-transparent border-none text-xs text-on-surface focus:outline-none appearance-none pr-3">
+            <option value="bp">血压</option>
+            <option value="bgs">血糖</option>
+          </select>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
+        </div>
+      </div>
+
+      <!-- 血压历史 -->
+      <div class="bg-surface rounded-xl shadow-card p-4" id="history-bp">
+        <p class="text-xs text-on-surface-variant mb-3">近 5 次血压（mmHg）· 整体呈平稳下降</p>
+        <div class="flex flex-col">
+          <!-- 历史-血压-1 -->
+          <div class="flex items-center py-2.5 border-b border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant w-24">今晨 07:30</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">118 / 76</span>
+            <span class="text-xs text-success">正常</span>
+          </div>
+          <!-- 历史-血压-2 -->
+          <div class="flex items-center py-2.5 border-b border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant w-24">三天前</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">121 / 79</span>
+            <span class="text-xs text-on-surface-variant">正常</span>
+          </div>
+          <!-- 历史-血压-3 -->
+          <div class="flex items-center py-2.5 border-b border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant w-24">上周一</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">124 / 80</span>
+            <span class="text-xs text-on-surface-variant">偏高</span>
+          </div>
+          <!-- 历史-血压-4 -->
+          <div class="flex items-center py-2.5 border-b border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant w-24">两周前</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">126 / 82</span>
+            <span class="text-xs text-on-surface-variant">偏高</span>
+          </div>
+          <!-- 历史-血压-5 -->
+          <div class="flex items-center py-2.5">
+            <span class="text-xs text-on-surface-variant w-24">三周前</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">128 / 83</span>
+            <span class="text-xs text-on-surface-variant">偏高</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 血糖历史（默认隐藏，切换显示） -->
+      <div class="bg-surface rounded-xl shadow-card p-4 hidden" id="history-bgs">
+        <p class="text-xs text-on-surface-variant mb-3">近 5 次空腹血糖（mmol/L）· 整体平稳</p>
+        <div class="flex flex-col">
+          <!-- 历史-血糖-1 -->
+          <div class="flex items-center py-2.5 border-b border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant w-24">今晨 07:00</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">5.2</span>
+            <span class="text-xs text-success">正常</span>
+          </div>
+          <!-- 历史-血糖-2 -->
+          <div class="flex items-center py-2.5 border-b border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant w-24">三天前</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">5.4</span>
+            <span class="text-xs text-on-surface-variant">正常</span>
+          </div>
+          <!-- 历史-血糖-3 -->
+          <div class="flex items-center py-2.5 border-b border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant w-24">上周一</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">5.1</span>
+            <span class="text-xs text-on-surface-variant">正常</span>
+          </div>
+          <!-- 历史-血糖-4 -->
+          <div class="flex items-center py-2.5 border-b border-outline-variant/10">
+            <span class="text-xs text-on-surface-variant w-24">两周前</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">5.5</span>
+            <span class="text-xs text-on-surface-variant">正常</span>
+          </div>
+          <!-- 历史-血糖-5 -->
+          <div class="flex items-center py-2.5">
+            <span class="text-xs text-on-surface-variant w-24">三周前</span>
+            <span class="text-sm font-semibold text-on-surface flex-1">5.6</span>
+            <span class="text-xs text-on-surface-variant">正常</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 底部保存按钮 ===== -->
+    <section class="px-4 mt-8">
+      <button id="btn-save" class="w-full bg-primary text-on-primary py-3.5 rounded-xl text-base font-semibold
+               hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2 shadow-card">
+        <i data-lucide="check" class="w-5 h-5"></i>保存身体记录
+      </button>
+      <p class="text-center text-xs text-on-surface-variant mt-3">主人，记得常来记录，我们一起见证每一分改变</p>
+    </section>
+
+  </main>
+
+  <!-- 温馨提示 Toast -->
+  <div id="toast-done" class="hidden fixed left-1/2 bottom-20 z-50 -translate-x-1/2 bg-on-surface/90 text-background
+        px-4 py-2.5 rounded-full text-sm font-medium inline-flex items-center gap-2 shadow-float min-w-max">
+    <i data-lucide="sparkles" class="w-4 h-4 text-warning"></i>
+    <span>记录已保存，感谢主人的贴心分享</span>
+  </div>
+
+  <script>
+    function navPush(route) {
+        console.log(`[原型演示] PUSH 到: ${route}`);
+        window.location.href = route;
+    }
+    function navReplace(route) {
+        console.log(`[原型演示] REPLACE 为: ${route}`);
+        window.location.replace(route);
+    }
+    function navReset(route) {
+        console.log(`[原型演示] RESET 到: ${route}`);
+        window.location.href = route;
+    }
+    function navBack() {
+        console.log(`[原型演示] BACK 返回上一页`);
+        if(window.history.length > 1) window.history.back();
+        else navReset('profile.html');
+    }
+
+    $(function () {
+      // 返回
+      $('#btn-back').on('click', function (e) {
+        e.preventDefault();
+        navBack();
+      });
+
+      // 更多（右上角）
+      $('#btn-more').on('click', function () {
+        // 后续应实现：弹出底部菜单（重置全部记录、导出健康数据等操作）
+        console.log('更多：弹出健康记录操作菜单');
+      });
+
+      // 各指标卡片：点击头部展开/收起输入区
+      var toggleMap = [
+        { card: '#card-bp', edit: '#card-bp-edit', arrow: '#card-bp-arrow' },
+        { card: '#card-bgs', edit: '#card-bgs-edit', arrow: '#card-bgs-arrow' },
+        { card: '#card-lipid', edit: '#card-lipid-edit', arrow: '#card-lipid-arrow' },
+        { card: '#card-heartrate', edit: '#card-heartrate-edit', arrow: '#card-heartrate-arrow' },
+        { card: '#card-weight', edit: '#card-weight-edit', arrow: '#card-weight-arrow' },
+        { card: '#card-bmi', edit: '#card-bmi-edit', arrow: '#card-bmi-arrow' },
+        { card: '#card-bf', edit: '#card-bf-edit', arrow: '#card-bf-arrow' },
+        { card: '#card-waist', edit: '#card-waist-edit', arrow: '#card-waist-arrow' }
+      ];
+
+      $.each(toggleMap, function (i, item) {
+        $(item.card).on('click', function (e) {
+          // 点击历史等内部按钮不触发折叠
+          if ($(e.target).closest('button').length) return;
+          var edit = $(item.edit);
+          var arrow = $(item.arrow);
+          var isOpen = !edit.hasClass('hidden');
+          if (isOpen) {
+            edit.addClass('hidden');
+            arrow.removeClass('rotate-180');
+          } else {
+            edit.removeClass('hidden');
+            arrow.addClass('rotate-180');
+          }
+        });
+      });
+
+      // 添加指标
+      $('#btn-add-metric').on('click', function () {
+        // 后续应实现：弹出底部菜单选择要新添加的健康指标（如血氧、尿酸、视力等），
+        // 并在列表末尾追加对应卡片，卡片样式与现有指标卡片一致。
+        console.log('添加指标：弹出指标选择菜单');
+      });
+
+      // 历史记录切换（血压/血糖）
+      $('#select-history').on('change', function () {
+        var val = $(this).val();
+        if (val === 'bp') {
+          $('#history-bp').removeClass('hidden');
+          $('#history-bgs').addClass('hidden');
+        } else {
+          $('#history-bgs').removeClass('hidden');
+          $('#history-bp').addClass('hidden');
+        }
+      });
+
+      // 单个指标的"历史"入口：跳转到历史记录区块并切换对应指标
+      $('#btn-bp-history').on('click', function (e) {
+        e.stopPropagation();
+        $('#select-history').val('bp').trigger('change');
+        $('html, body').animate({ scrollTop: $('#select-history').closest('section').offset().top - 60 }, 300);
+      });
+      $('#btn-bgs-history').on('click', function (e) {
+        e.stopPropagation();
+        $('#select-history').val('bgs').trigger('change');
+        $('html, body').animate({ scrollTop: $('#select-history').closest('section').offset().top - 60 }, 300);
+      });
+      $('#btn-lipid-history').on('click', function (e) {
+        e.stopPropagation();
+        // 后续应实现：血脂历史为独立数据，可在历史记录区块新增"血脂"选项
+        console.log('血脂历史：需要新增血脂历史数据组');
+      });
+
+      // 保存身体记录
+      $('#btn-save').on('click', function () {
+        // 后续应实现：收集各输入框/下拉框当前值，校验数值合法性后调用接口保存，
+        // 保存成功后展示 toast 提示，延迟 1.5s 后返回上一页。
+        var toast = $('#toast-done');
+        toast.removeClass('hidden');
+        setTimeout(function () {
+          toast.addClass('hidden');
+          navBack();
+        }, 1500);
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

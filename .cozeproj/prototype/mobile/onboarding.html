@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 字体（按需，系统字体时省略；只能用 Google 字体，CSS 地址前缀：https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影（暖调低透明） === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans flex flex-col">
+
+  <!-- ===== 引导流程页 Header：品牌标题 + 跳过 ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <div class="w-10 h-10"></div>
+    <h1 class="font-display text-base font-semibold text-on-surface">暖暖 · 认识主人啦</h1>
+    <button id="btn-skip" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full
+                   hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <span class="text-sm">跳过</span>
+    </button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+
+    <!-- ===== 开场问候 + 说明文案 ===== -->
+    <section class="px-6 pt-6">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center">
+          <i data-lucide="heart-handshake" class="w-6 h-6 text-primary"></i>
+        </div>
+        <span class="font-display text-xs tracking-widest text-on-surface-variant">暖暖 · 健康生活方式管理</span>
+      </div>
+      <h2 class="mt-4 text-xl font-bold text-on-surface">欢迎回家，主人 ✿</h2>
+      <p class="mt-2 text-sm leading-relaxed text-on-surface-variant">
+        为了让暖暖更好地懂您、陪您，请让暖暖先认识一下主人的身体与生活。有了这些信息，
+        暖暖才能为您科学地推荐专属的饮食与运动计划，陪您一起把日子过得越来越暖、越来越健康。
+      </p>
+      <p class="mt-4 text-right text-xs text-on-surface-variant/70">—— 健康生活方式管理</p>
+    </section>
+
+    <!-- ===== 步骤条 ===== -->
+    <section class="px-6 mt-8">
+      <div class="flex items-center gap-3">
+        <!-- 步骤：1/3 -->
+        <div class="flex items-center gap-2">
+          <span id="step-num" class="text-sm font-semibold text-primary">1</span>
+          <span class="text-sm text-on-surface-variant">/ 3</span>
+        </div>
+        <div class="flex-1">
+          <div class="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+            <div id="step-progress" class="h-1.5 bg-primary rounded-full" style="width:33.33%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 mt-2 text-xs text-on-surface-variant">
+        <span id="step-name" class="font-semibold text-on-surface">基本信息</span>
+      </div>
+    </section>
+
+    <!-- ===== 步骤容器 ===== -->
+    <section class="px-4 mt-6 space-y-6">
+
+      <!-- 步骤 1：基本信息 -->
+      <div id="step-basic" class="space-y-5">
+        <!-- 身高 -->
+        <div>
+          <label for="ipt-height" class="block text-sm font-medium text-on-surface mb-1.5">身高（厘米）</label>
+          <div class="relative">
+            <input id="ipt-height" type="number" inputmode="decimal" placeholder="例如 168" value="168"
+                   class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors pr-12"/>
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">cm</span>
+          </div>
+        </div>
+        <!-- 体重 -->
+        <div>
+          <label for="ipt-weight" class="block text-sm font-medium text-on-surface mb-1.5">体重（公斤）</label>
+          <div class="relative">
+            <input id="ipt-weight" type="number" inputmode="decimal" placeholder="例如 55" value="55"
+                   class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors pr-12"/>
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">kg</span>
+          </div>
+        </div>
+        <!-- 年龄 -->
+        <div>
+          <label for="ipt-age" class="block text-sm font-medium text-on-surface mb-1.5">年龄（岁）</label>
+          <input id="ipt-age" type="number" inputmode="numeric" placeholder="例如 30" value="30"
+                 class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+        </div>
+        <!-- 性别 -->
+        <div>
+          <span class="block text-sm font-medium text-on-surface mb-1.5">性别</span>
+          <div id="gender-option" class="grid grid-cols-2 gap-3">
+            <!-- 性别-女 -->
+            <button type="button" class="gender-item flex flex-col items-center gap-2 py-4 rounded-xl bg-surface-container border-none hover:bg-surface-container-high transition-colors cursor-pointer">
+              <i data-lucide="venus" class="w-6 h-6 text-secondary"></i>
+              <span class="text-sm font-medium text-on-surface">女生</span>
+            </button>
+            <!-- 性别-男 -->
+            <button type="button" class="gender-item flex flex-col items-center gap-2 py-4 rounded-xl bg-surface-container border-none hover:bg-surface-container-high transition-colors cursor-pointer">
+              <i data-lucide="mars" class="w-6 h-6 text-on-surface-variant"></i>
+              <span class="text-sm font-medium text-on-surface">男生</span>
+            </button>
+          </div>
+        </div>
+        <!-- 下一步 -->
+        <button id="btn-next-1" class="w-full bg-primary text-on-primary py-3.5 rounded-xl text-base font-semibold
+               hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2 shadow-card">
+          下一步<i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 步骤 2：健康指标 + 过往病史 -->
+      <div id="step-health" class="hidden space-y-6">
+        <!-- 健康指标 -->
+        <div>
+          <h3 class="text-base font-semibold text-on-surface mb-1">健康指标</h3>
+          <p class="text-xs text-on-surface-variant mb-4">主人有数据的可以填，没有的跳过即可，暖暖不会强迫哦～</p>
+          <div class="space-y-4">
+            <!-- 指标-血压 -->
+            <div>
+              <label for="ipt-sys" class="block text-sm font-medium text-on-surface mb-1.5">血压（mmHg）</label>
+              <div class="flex items-center gap-2">
+                <input id="ipt-sys" type="number" inputmode="numeric" placeholder="收缩压 如 120" value="120"
+                       class="flex-1 bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+                <span class="text-sm font-medium text-on-surface-variant">/</span>
+                <input id="ipt-dia" type="number" inputmode="numeric" placeholder="舒张压 如 80" value="80"
+                       class="flex-1 bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+              </div>
+            </div>
+            <!-- 指标-血糖 -->
+            <div>
+              <label for="ipt-sugar" class="block text-sm font-medium text-on-surface mb-1.5">空腹血糖（mmol/L）</label>
+              <input id="ipt-sugar" type="number" inputmode="decimal" placeholder="如 5.2" value="5.2"
+                     class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+            </div>
+            <!-- 指标-血脂（可选） -->
+            <div>
+              <label for="ipt-lipid" class="block text-sm font-medium text-on-surface mb-1.5">血脂（TG·mmol/L）<span class="text-on-surface-variant/60"> · 可选</span></label>
+              <input id="ipt-lipid" type="number" inputmode="decimal" placeholder="如 1.3" value=""
+                     class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+            </div>
+            <!-- 指标-心率 -->
+            <div>
+              <label for="ipt-hr" class="block text-sm font-medium text-on-surface mb-1.5">静息心率（次/分）</label>
+              <div class="relative">
+                <input id="ipt-hr" type="number" inputmode="numeric" placeholder="如 72" value="72"
+                       class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors pr-12"/>
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant">bpm</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 过往病史（多选） -->
+        <div>
+          <h3 class="text-base font-semibold text-on-surface mb-1">过往病史</h3>
+          <p class="text-xs text-on-surface-variant mb-4">可多选，选择主人经历过的健康情况</p>
+          <div id="history-list" class="grid grid-cols-2 gap-2.5">
+            <!-- 病史-高血压 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">高血压</span>
+            </button>
+            <!-- 病史-糖尿病 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">糖尿病</span>
+            </button>
+            <!-- 病史-高血脂 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">高血脂</span>
+            </button>
+            <!-- 病史-心脏病 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">心脏病</span>
+            </button>
+            <!-- 病史-痛风 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">痛风</span>
+            </button>
+            <!-- 病史-甲状腺疾病 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">甲状腺疾病</span>
+            </button>
+            <!-- 病史-骨质疏松 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">骨质疏松</span>
+            </button>
+            <!-- 病史-哮喘 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">哮喘</span>
+            </button>
+            <!-- 病史-慢性胃炎 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">慢性胃炎</span>
+            </button>
+            <!-- 病史-肾脏疾病 -->
+            <button type="button" class="history-card flex items-center gap-2 px-3 py-3 rounded-xl bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer">
+              <span class="w-4 h-4 rounded-full border border-outline-variant flex items-center justify-center shrink-0"><span class="hidden w-2 h-2 rounded-full bg-primary"></span></span>
+              <span class="text-sm text-on-surface">肾脏疾病</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button id="btn-prev-2" class="w-20 bg-surface-container text-on-surface-variant border-none py-3.5 rounded-xl text-base font-semibold hover:bg-surface-container-high active:scale-[0.98] transition-all">上一步</button>
+          <button id="btn-next-2" class="flex-1 bg-primary text-on-primary py-3.5 rounded-xl text-base font-semibold
+                 hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2 shadow-card">
+            下一步<i data-lucide="arrow-right" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 步骤 3：生活饮食习惯 -->
+      <div id="step-life" class="hidden space-y-5">
+        <p class="text-sm leading-relaxed text-on-surface-variant">
+          了解主人的生活习惯，暖暖才能给出更贴心、更可落地的建议。这一页都是可选项，随主人心意～
+        </p>
+
+        <!-- 饮食偏好 -->
+        <div>
+          <span class="block text-sm font-medium text-on-surface mb-1.5">饮食偏好（可多选）</span>
+          <div id="diet-prefs" class="flex flex-wrap gap-2.5">
+            <!-- 偏好-清淡 -->
+            <button type="button" class="pref-pill px-4 py-2 rounded-full bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer text-sm text-on-surface">清淡</button>
+            <!-- 偏好-低油少盐 -->
+            <button type="button" class="pref-pill px-4 py-2 rounded-full bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer text-sm text-on-surface">低油少盐</button>
+            <!-- 偏好-爱吃辣 -->
+            <button type="button" class="pref-pill px-4 py-2 rounded-full bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer text-sm text-on-surface">爱吃辣</button>
+            <!-- 偏好-爱吃甜 -->
+            <button type="button" class="pref-pill px-4 py-2 rounded-full bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer text-sm text-on-surface">爱吃甜</button>
+            <!-- 偏好-素食为主 -->
+            <button type="button" class="pref-pill px-4 py-2 rounded-full bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer text-sm text-on-surface">素食为主</button>
+            <!-- 偏好-海鲜 -->
+            <button type="button" class="pref-pill px-4 py-2 rounded-full bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer text-sm text-on-surface">喜欢海鲜</button>
+            <!-- 偏好-外食较多 -->
+            <button type="button" class="pref-pill px-4 py-2 rounded-full bg-surface shadow-card border-none hover:bg-surface-container transition-colors cursor-pointer text-sm text-on-surface">外食较多</button>
+          </div>
+        </div>
+
+        <!-- 作息偏好 -->
+        <div>
+          <span class="block text-sm font-medium text-on-surface mb-1.5">作息习惯</span>
+          <div id="sleep-option" class="grid grid-cols-2 gap-2.5">
+            <!-- 作息-早睡早起 -->
+            <button type="button" class="sleep-item flex flex-col items-center gap-2 py-4 rounded-xl bg-surface-container border-none hover:bg-surface-container-high transition-colors cursor-pointer">
+              <i data-lucide="sunrise" class="w-6 h-6 text-secondary"></i>
+              <span class="text-sm font-medium text-on-surface">早睡早起</span>
+            </button>
+            <!-- 作息-夜猫子 -->
+            <button type="button" class="sleep-item flex flex-col items-center gap-2 py-4 rounded-xl bg-surface-container border-none hover:bg-surface-container-high transition-colors cursor-pointer">
+              <i data-lucide="moon-star" class="w-6 h-6 text-on-surface-variant"></i>
+              <span class="text-sm font-medium text-on-surface">夜猫子</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 过敏/忌口 -->
+        <div>
+          <label for="ipt-allergy" class="block text-sm font-medium text-on-surface mb-1.5">对什么食物过敏或忌口（可选）</label>
+          <textarea id="ipt-allergy" rows="3" placeholder="例如：花生、海鲜过敏；不吃香菜…"
+                    class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none"></textarea>
+        </div>
+
+        <div class="flex gap-3">
+          <button id="btn-prev-3" class="w-20 bg-surface-container text-on-surface-variant border-none py-3.5 rounded-xl text-base font-semibold hover:bg-surface-container-high active:scale-[0.98] transition-all">上一步</button>
+          <button id="btn-finish" class="flex-1 bg-primary text-on-primary py-3.5 rounded-xl text-base font-semibold
+                 hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2 shadow-card">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>开始暖暖的陪伴之旅
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 导航辅助函数
+    function navPush(route) {
+      console.log(`[原型演示] PUSH 到: ${route}`);
+      window.location.href = route;
+    }
+    function navReplace(route) {
+      console.log(`[原型演示] REPLACE 为: ${route}`);
+      window.location.replace(route);
+    }
+    function navReset(route) {
+      console.log(`[原型演示] RESET 到: ${route}`);
+      window.location.href = route;
+    }
+    function navBack() {
+      console.log(`[原型演示] BACK 返回上一页`);
+      if (window.history.length > 1) window.history.back();
+    }
+  </script>
+
+  <script>
+    $(function () {
+      var step = 1;
+      var stepMeta = {
+        1: { name: '基本信息', progress: '33.33%' },
+        2: { name: '健康指标与病史', progress: '66.66%' },
+        3: { name: '生活饮食习惯', progress: '100%' }
+      };
+
+      function goStep(n) {
+        step = n;
+        $('#step-basic').toggleClass('hidden', n !== 1);
+        $('#step-health').toggleClass('hidden', n !== 2);
+        $('#step-life').toggleClass('hidden', n !== 3);
+        $('#step-num').text(n);
+        $('#step-name').text(stepMeta[n].name);
+        $('#step-progress').css('width', stepMeta[n].progress);
+      }
+
+      // 跳过引导流程：直接进入健康管理主流程
+      $('#btn-skip').on('click', function () {
+        console.log('跳过引导，进入健康管理');
+        navReplace('home.html');
+      });
+
+      // 步骤1：基本信息 → 步骤2
+      $('#btn-next-1').on('click', function () { goStep(2); });
+      // 步骤2：返回 / 前进
+      $('#btn-prev-2').on('click', function () { goStep(1); });
+      $('#btn-next-2').on('click', function () { goStep(3); });
+      // 步骤3：返回
+      $('#btn-prev-3').on('click', function () { goStep(2); });
+
+      // 完成采集：进入健康管理主流程
+      // 提交后应在此处收集所有表单输入值（身高/体重/年龄/性别/各健康指标/所选病史/饮食偏好/作息/忌口），
+      // 存入本地存储或提交至后端建档，然后跳转到健康管理首页。
+      $('#btn-finish').on('click', function () {
+        console.log('完成档案采集，进入健康管理首页');
+        navReplace('home.html');
+      });
+
+      // 性别选择（单选）
+      $('#gender-option').on('click', '.gender-item', function () {
+        var isSelected = $(this).hasClass('selected');
+        $('#gender-option .gender-item').removeClass('selected')
+          .css({'background': '', 'boxShadow': ''})
+          .find('i').css('color', '');
+        if (!isSelected) {
+          $(this).addClass('selected')
+            .css({'background': '#DEE5D9', 'boxShadow': '0 0 0 2px #8FA68E'})
+            .find('i').css('color', '#5E725D');
+        } else {
+          $('#gender-option .gender-item').first().addClass('selected')
+            .css({'background': '#DEE5D9', 'boxShadow': '0 0 0 2px #8FA68E'})
+            .find('i').css('color', '#8FA68E');
+        }
+      });
+
+      // 病史多选（选中态：圆心高亮）
+      $('#history-list').on('click', '.history-card', function () {
+        $(this).toggleClass('selected');
+        $(this).toggleClass('bg-primary-container', $(this).hasClass('selected'));
+        $(this).find('.w-2').toggleClass('hidden', !$(this).hasClass('selected'));
+        $(this).find('span.w-4').toggleClass('border-primary', $(this).hasClass('selected'));
+      });
+
+      // 饮食偏好多选（选中态：背景高亮）
+      $('#diet-prefs').on('click', '.pref-pill', function () {
+        var on = $(this).toggleClass('selected').hasClass('selected');
+        $(this).toggleClass('bg-primary-container', on)
+          .css({ 'boxShadow': on ? '0 0 0 2px #8FA68E' : '', 'fontWeight': on ? 600 : '' });
+      });
+
+      // 作息选择（单选）
+      $('#sleep-option').on('click', '.sleep-item', function () {
+        var isSelected = $(this).hasClass('selected');
+        $('#sleep-option .sleep-item').removeClass('selected')
+          .css({'background': '', 'boxShadow': ''}).find('i').css('color', '');
+        if (!isSelected) {
+          $(this).addClass('selected')
+            .css({'background': '#DEE5D9', 'boxShadow': '0 0 0 2px #8FA68E'})
+            .find('i').css('color', '#5E725D');
+        }
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

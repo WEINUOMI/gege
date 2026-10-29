@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 字体（按需，系统字体时省略；只能用 Google 字体，CSS 地址前缀：https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影（暖调低透明） === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    /* 纯 CSS 滚动条美化，用于聊天区等 */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- ===== 一级页：顶部 Header（无返回） ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary">
+        <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+      </div>
+      <h1 class="font-display text-lg font-semibold tracking-wide text-on-surface">暖暖 · 陪跑</h1>
+    </div>
+    <button id="btn-notice" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <i data-lucide="bell" class="w-5 h-5"></i>
+      <span class="absolute w-2 h-2 bg-secondary rounded-full translate-x-3 -translate-y-3 hidden md:inline-block"></span>
+    </button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+    <!-- @main-content:start -->
+    <div class="px-4 pt-5 flex flex-col gap-6">
+
+      <!-- 区块1：顶部健康档案卡片 -->
+      <section id="card-profile" class="bg-surface rounded-2xl shadow-card p-5 border border-outline-variant/20">
+        <div class="flex items-center gap-3">
+          <div class="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center">
+            <span class="font-display text-xl font-bold text-primary">初</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-on-surface-variant">下午好</p>
+            <h2 class="font-display text-lg font-semibold text-on-surface">主人，今日也要元气满满</h2>
+          </div>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/15 text-secondary text-xs font-semibold">
+            <i data-lucide="flame" class="w-3.5 h-3.5"></i>活力值 92
+          </span>
+        </div>
+
+        <!-- 健康自评概览 -->
+        <div class="mt-4 rounded-xl bg-primary-container/60 p-3.5">
+          <p class="text-xs text-on-surface-variant mb-2">今日健康自评</p>
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-on-surface">睡眠充足 · 精力充沛 · 轻微肩颈紧绷</span>
+            <span class="text-xs font-semibold text-primary">总体：优</span>
+          </div>
+        </div>
+
+        <!-- 激励数据：累计积分 + 连续打卡 -->
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <div class="rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-warning/15 flex items-center justify-center text-warning">
+              <i data-lucide="star" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <p class="text-lg font-bold text-on-surface">1,280</p>
+              <p class="text-xs text-on-surface-variant">累计积分</p>
+            </div>
+          </div>
+          <div class="rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-3.5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-secondary/15 flex items-center justify-center text-secondary">
+              <i data-lucide="calendar-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <p class="text-lg font-bold text-on-surface">21 天</p>
+              <p class="text-xs text-on-surface-variant">连续打卡</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 区块2：身体状况记录模块 -->
+      <section>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-semibold text-on-surface flex items-center gap-2">
+            <i data-lucide="activity" class="w-4 h-4 text-primary"></i>身体状况记录
+          </h3>
+          <button id="btn-body-edit" class="text-xs text-primary font-medium hover:opacity-80">编辑</button>
+        </div>
+        <div id="card-body" class="bg-surface rounded-2xl shadow-card overflow-hidden border border-outline-variant/20 divide-y divide-outline-variant/10">
+          <!-- 列表-身高 -->
+          <button id="row-height" class="w-full flex items-center gap-3 px-4 py-3 bg-surface active:bg-surface-container transition-colors text-left">
+            <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><i data-lucide="ruler" class="w-4 h-4"></i></div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-on-surface">身高</p>
+              <p class="text-xs text-on-surface-variant">最近更新：昨天</p>
+            </div>
+            <span class="text-sm font-semibold text-on-surface">168 cm</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-on-surface-variant/50"></i>
+          </button>
+          <!-- 列表-体重 -->
+          <button id="row-weight" class="w-full flex items-center gap-3 px-4 py-3 bg-surface active:bg-surface-container transition-colors text-left">
+            <div class="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary"><i data-lucide="weight" class="w-4 h-4"></i></div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-on-surface">体重</p>
+              <p class="text-xs text-on-surface-variant">较上周 ↓1.2 kg</p>
+            </div>
+            <span class="text-sm font-semibold text-on-surface">62.4 kg</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-on-surface-variant/50"></i>
+          </button>
+          <!-- 列表-血压 -->
+          <button id="row-pressure" class="w-full flex items-center gap-3 px-4 py-3 bg-surface active:bg-surface-container transition-colors text-left">
+            <div class="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center text-success"><i data-lucide="gauge" class="w-4 h-4"></i></div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-on-surface">血压</p>
+              <p class="text-xs text-on-surface-variant">状态：正常</p>
+            </div>
+            <span class="text-sm font-semibold text-on-surface">118 / 76</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-on-surface-variant/50"></i>
+          </button>
+          <!-- 列表-血糖 -->
+          <button id="row-glucose" class="w-full flex items-center gap-3 px-4 py-3 bg-surface active:bg-surface-container transition-colors text-left">
+            <div class="w-9 h-9 rounded-lg bg-warning/10 flex items-center justify-center text-warning"><i data-lucide="droplet" class="w-4 h-4"></i></div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-on-surface">血糖</p>
+              <p class="text-xs text-on-surface-variant">空腹 · 状态：正常</p>
+            </div>
+            <span class="text-sm font-semibold text-on-surface">5.2 mmol/L</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-on-surface-variant/50"></i>
+          </button>
+          <!-- 列表-血脂 -->
+          <button id="row-lipid" class="w-full flex items-center gap-3 px-4 py-3 bg-surface active:bg-surface-container transition-colors text-left">
+            <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><i data-lucide="heart-pulse" class="w-4 h-4"></i></div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-on-surface">血脂</p>
+              <p class="text-xs text-on-surface-variant">总胆固醇 · 状态：需关注</p>
+            </div>
+            <span class="text-sm font-semibold text-warning">5.8 mmol/L</span>
+            <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-on-surface-variant/50"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- 区块3：奖惩积分模块 -->
+      <section>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-semibold text-on-surface flex items-center gap-2">
+            <i data-lucide="gift" class="w-4 h-4 text-secondary"></i>奖惩积分
+          </h3>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/50"></i>
+        </div>
+        <button id="card-rewards" class="w-full bg-surface rounded-2xl shadow-card p-4 border border-outline-variant/20 active:bg-surface-container transition-colors text-left">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-warning/15 flex items-center justify-center text-warning"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+            <div class="flex-1">
+              <p class="text-sm text-on-surface-variant">当前积分</p>
+              <p class="text-lg font-bold text-on-surface">1,280 <span class="text-xs font-medium text-on-surface-variant">分</span></p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-on-surface-variant">今日可获</p>
+              <p class="text-sm font-semibold text-secondary">+40 分</p>
+            </div>
+          </div>
+          <div class="mt-3 rounded-lg bg-surface-container p-3 text-xs text-on-surface-variant leading-relaxed">
+            规则简述：每日按时打卡 +10 分 · 达标目标 +30 分 · 漏打卡一次扣 5 分，连续漏打卡 3 天额外提醒并暂停奖励。
+          </div>
+        </button>
+      </section>
+
+      <!-- 区块4：好友邀请模块 -->
+      <section>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-semibold text-on-surface flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4 text-primary"></i>好友监督
+          </h3>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/50"></i>
+        </div>
+        <button id="card-friends" class="w-full bg-surface rounded-2xl shadow-card p-4 border border-outline-variant/20 active:bg-surface-container transition-colors text-left">
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-on-surface-variant">我的邀请标识</span>
+            <span class="px-2.5 py-1 rounded-lg bg-primary-container text-primary text-sm font-bold tracking-widest">NKN-8F2K</span>
+          </div>
+          <div class="mt-4 flex items-center gap-3">
+            <!-- 好友监督团头像栈 -->
+            <div class="flex -space-x-2.5">
+              <div class="w-9 h-9 rounded-full bg-secondary/20 border-2 border-surface flex items-center justify-center text-secondary text-xs font-bold">琳</div>
+              <div class="w-9 h-9 rounded-full bg-primary/20 border-2 border-surface flex items-center justify-center text-primary text-xs font-bold">木</div>
+              <div class="w-9 h-9 rounded-full bg-warning/20 border-2 border-surface flex items-center justify-center text-warning text-xs font-bold">安</div>
+              <div class="w-9 h-9 rounded-full bg-surface-container border-2 border-surface flex items-center justify-center text-on-surface-variant text-[10px] font-semibold">+2</div>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-on-surface">监督团 5 人</p>
+              <p class="text-xs text-on-surface-variant">1 人今天已默默关注你的打卡</p>
+            </div>
+          </div>
+          <span class="mt-4 w-full inline-flex items-center justify-center gap-2 bg-secondary text-on-secondary py-3 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>邀请好友共同监督
+          </span>
+        </button>
+      </section>
+
+      <!-- 区块5：目标设置模块 -->
+      <section>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-semibold text-on-surface flex items-center gap-2">
+            <i data-lucide="target" class="w-4 h-4 text-primary"></i>我的目标
+          </h3>
+          <button id="btn-goal-add" class="w-8 h-8 flex items-center justify-center rounded-full bg-primary/15 text-primary hover:bg-primary/25 transition-colors" aria-label="新建目标">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div id="goal-list" class="flex flex-col gap-3">
+          <!-- 目标1 -->
+          <button id="goal-1" class="w-full bg-surface rounded-2xl shadow-card p-4 border border-outline-variant/20 active:bg-surface-container transition-colors text-left">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-semibold text-on-surface">减重 10 斤</p>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-xs font-semibold">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>今日已打卡
+              </span>
+            </div>
+            <div class="mt-3 h-2 rounded-full bg-surface-container overflow-hidden">
+              <div class="h-full rounded-full bg-primary" style="width:68%"></div>
+            </div>
+            <div class="mt-1.5 flex items-center justify-between text-xs text-on-surface-variant">
+              <span>已减 6.8 / 10 斤</span><span>68% · 还剩 47 天</span>
+            </div>
+          </button>
+
+          <!-- 目标2 -->
+          <button id="goal-2" class="w-full bg-surface rounded-2xl shadow-card p-4 border border-outline-variant/20 active:bg-surface-container transition-colors text-left">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-semibold text-on-surface">血糖平稳管理</p>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/15 text-warning text-xs font-semibold">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>待打卡
+              </span>
+            </div>
+            <div class="mt-3 h-2 rounded-full bg-surface-container overflow-hidden">
+              <div class="h-full rounded-full bg-primary" style="width:42%"></div>
+            </div>
+            <div class="mt-1.5 flex items-center justify-between text-xs text-on-surface-variant">
+              <span>达标 42 / 100 天</span><span>42% · 还剩 58 天</span>
+            </div>
+          </button>
+
+          <!-- 目标3 -->
+          <button id="goal-3" class="w-full bg-surface rounded-2xl shadow-card p-4 border border-outline-variant/20 active:bg-surface-container transition-colors text-left">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-semibold text-on-surface">21 天学习英语</p>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/15 text-success text-xs font-semibold">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>今日已打卡
+              </span>
+            </div>
+            <div class="mt-3 h-2 rounded-full bg-surface-container overflow-hidden">
+              <div class="h-full rounded-full bg-secondary" style="width:90%"></div>
+            </div>
+            <div class="mt-1.5 flex items-center justify-between text-xs text-on-surface-variant">
+              <span>完成 19 / 21 天</span><span>90% · 还剩 2 天</span>
+            </div>
+          </button>
+        </div>
+
+        <button id="btn-goal-setup" class="mt-3 w-full inline-flex items-center justify-center gap-2 bg-surface-container text-on-surface py-3 rounded-xl text-sm font-semibold hover:bg-surface-container-high active:scale-[0.98] transition-all">
+          <i data-lucide="plus" class="w-4 h-4"></i>设置新目标
+        </button>
+      </section>
+
+      <!-- 区块6：饮食 & 运动快捷入口 -->
+      <section class="grid grid-cols-2 gap-3">
+        <!-- 入口-饮食 -->
+        <button id="entry-diet" class="bg-surface rounded-2xl shadow-card p-4 border border-outline-variant/20 active:bg-surface-container transition-colors text-left">
+          <div class="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary"><i data-lucide="utensils" class="w-5 h-5"></i></div>
+          <p class="mt-3 text-sm font-semibold text-on-surface">饮食推荐</p>
+          <p class="mt-0.5 text-xs text-on-surface-variant">今日平衡营养餐单</p>
+        </button>
+        <!-- 入口-运动 -->
+        <button id="entry-exercise" class="bg-surface rounded-2xl shadow-card p-4 border border-outline-variant/20 active:bg-surface-container transition-colors text-left">
+          <div class="w-10 h-10 rounded-xl bg-secondary/15 flex items-center justify-center text-secondary"><i data-lucide="dumbbell" class="w-5 h-5"></i></div>
+          <p class="mt-3 text-sm font-semibold text-on-surface">运动推荐</p>
+          <p class="mt-0.5 text-xs text-on-surface-variant">根据身体状态定制</p>
+        </button>
+      </section>
+
+    </div>
+    <!-- @main-content:end -->
+  </main>
+
+  <!-- ===== 底部 TabBar ===== -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-surface
+              flex justify-around items-center h-14 pb-[env(safe-area-inset-bottom)] border-t border-outline-variant/20">
+    <a href="home.html" id="nav-home" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-on-surface-variant hover:text-on-surface transition-colors">
+      <i data-lucide="message-circle-heart" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">暖心对话</span>
+    </a>
+    <a href="profile.html" id="nav-profile" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-primary" aria-current="page">
+      <i data-lucide="heart-pulse" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">健康管理</span>
+    </a>
+  </nav>
+
+  <script>lucide.createIcons();</script>
+
+  <script>
+    function navPush(route) {
+      console.log('[原型演示] PUSH 到: ' + route);
+      window.location.href = route;
+    }
+    function navReplace(route) {
+      console.log('[原型演示] REPLACE 为: ' + route);
+      window.location.replace(route);
+    }
+    function navReset(route) {
+      console.log('[原型演示] RESET 到: ' + route);
+      window.location.href = route;
+    }
+    function navBack() {
+      console.log('[原型演示] BACK 返回上一页');
+      if (window.history.length > 1) window.history.back();
+    }
+
+    $(function () {
+      // TabBar 切换
+      $('#nav-home').on('click', function (e) {
+        e.preventDefault();
+        navReset('home.html');
+      });
+      $('#nav-profile').on('click', function (e) {
+        e.preventDefault();
+        navReset('profile.html');
+      });
+
+      // 通知铃铛
+      $('#btn-notice').on('click', function () {
+        navPush('home.html');
+      });
+
+      // 身体状况记录：整卡与各行均跳转记录页
+      $('#card-body').on('click', '#row-height, #row-weight, #row-pressure, #row-glucose, #row-lipid', function () {
+        const key = $(this).attr('id').replace('row-', '');
+        navPush('body-records.html?field=' + key);
+      });
+      $('#btn-body-edit').on('click', function () {
+        navPush('body-records.html');
+      });
+
+      // 奖惩积分
+      $('#card-rewards').on('click', function () {
+        navPush('rewards.html');
+      });
+
+      // 好友邀请
+      $('#card-friends').on('click', function (e) {
+        // 邀请好友共同监督按钮也属于整卡热区，一并进入好友页
+        navPush('friends.html');
+      });
+
+      // 目标卡片 → 目标详情
+      $('#goal-list').on('click', '#goal-1, #goal-2, #goal-3', function () {
+        navPush('goal-detail.html?id=' + $(this).attr('id'));
+      });
+      // 新建目标
+      $('#btn-goal-add').on('click', function () {
+        navPush('goal-setup.html');
+      });
+      $('#btn-goal-setup').on('click', function () {
+        navPush('goal-setup.html');
+      });
+
+      // 饮食 / 运动快捷入口
+      $('#entry-diet').on('click', function () {
+        navPush('diet.html');
+      });
+      $('#entry-exercise').on('click', function () {
+        navPush('exercise.html');
+      });
+    });
+  </script>
+</body>
+
+</html>

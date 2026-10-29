@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影（暖调低透明） === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- ===== 二级页顶部 Header（带返回按钮） ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <button id="header-back" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors" aria-label="返回">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </button>
+    <h1 class="font-display text-base font-semibold text-on-surface">设定目标</h1>
+    <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container transition-colors" aria-label="更多">
+      <i data-lucide="ellipsis-vertical" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+
+    <!-- 引导语 -->
+    <section class="px-4 mt-6">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-full bg-secondary-container flex items-center justify-center text-secondary shrink-0">
+          <i data-lucide="sparkles" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h2 class="text-base font-semibold text-on-surface">主人，一起设定一个让身心记住的目标吧</h2>
+          <p class="text-xs text-on-surface-variant mt-0.5">选对方向，暖暖会陪您稳稳走完每一程。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1. 目标类型选择 -->
+    <section class="px-4 mt-8">
+      <div class="flex items-center gap-2 mb-3">
+        <h3 class="text-base font-semibold text-on-surface">选择目标类型</h3>
+      </div>
+      <div class="grid grid-cols-2 gap-3" id="goal-type-list">
+        <!-- 目标类型-1 体重体型管理（预选） -->
+        <button id="goaltype-1" data-goal="体重体型管理" class="goal-type text-left bg-surface rounded-xl shadow-card p-4 flex flex-col gap-1.5 border-2 border-primary bg-primary/5">
+          <span class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-primary">
+            <i data-lucide="scale" class="w-4.5 h-4.5"></i>
+          </span>
+          <span class="text-sm font-semibold text-on-surface">体重体型管理</span>
+          <span class="text-xs text-on-surface-variant">减重 · 增肌</span>
+        </button>
+        <!-- 目标类型-2 -->
+        <button id="goaltype-2" data-goal="身体健康指标" class="goal-type text-left bg-surface rounded-xl shadow-card p-4 flex flex-col gap-1.5 border-2 border-outline-variant/20">
+          <span class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-secondary">
+            <i data-lucide="activity" class="w-4.5 h-4.5"></i>
+          </span>
+          <span class="text-sm font-semibold text-on-surface">身体健康指标</span>
+          <span class="text-xs text-on-surface-variant">三高控制 · 维持体重</span>
+        </button>
+        <!-- 目标类型-3 -->
+        <button id="goaltype-3" data-goal="学习计划" class="goal-type text-left bg-surface rounded-xl shadow-card p-4 flex flex-col gap-1.5 border-2 border-outline-variant/20">
+          <span class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-primary">
+            <i data-lucide="book-open" class="w-4.5 h-4.5"></i>
+          </span>
+          <span class="text-sm font-semibold text-on-surface">学习计划</span>
+          <span class="text-xs text-on-surface-variant">英语学习 · 技能进修</span>
+        </button>
+        <!-- 目标类型-4 -->
+        <button id="goaltype-4" data-goal="习惯养成" class="goal-type text-left bg-surface rounded-xl shadow-card p-4 flex flex-col gap-1.5 border-2 border-outline-variant/20">
+          <span class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-secondary">
+            <i data-lucide="heart-handshake" class="w-4.5 h-4.5"></i>
+          </span>
+          <span class="text-sm font-semibold text-on-surface">习惯养成</span>
+          <span class="text-xs text-on-surface-variant">早睡早起 · 每日阅读</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 2. 指标多样性选择 -->
+    <section class="px-4 mt-8">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-semibold text-on-surface">你想追踪的指标</h3>
+        <span class="text-xs text-on-surface-variant" id="indicator-count">已选 3 项</span>
+      </div>
+      <div class="flex flex-wrap gap-2.5" id="indicator-list">
+        <!-- 指标-体重（预选） -->
+        <button data-indicator="体重" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-primary text-on-primary">
+          <i data-lucide="gauge" class="w-4 h-4 mr-1.5 align-[-2px]"></i>体重
+        </button>
+        <!-- 指标-体脂率（预选） -->
+        <button data-indicator="体脂率" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-primary text-on-primary">
+          <i data-lucide="percent" class="w-4 h-4 mr-1.5 align-[-2px]"></i>体脂率
+        </button>
+        <!-- 指标-BMI（预选） -->
+        <button data-indicator="BMI" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-primary text-on-primary">
+          <i data-lucide="activity" class="w-4 h-4 mr-1.5 align-[-2px]"></i>BMI
+        </button>
+        <!-- 指标-血压 -->
+        <button data-indicator="血压" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant border border-outline-variant/20">
+          <i data-lucide="heart-pulse" class="w-4 h-4 mr-1.5 align-[-2px]"></i>血压
+        </button>
+        <!-- 指标-血糖 -->
+        <button data-indicator="血糖" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant border border-outline-variant/20">
+          <i data-lucide="syringe" class="w-4 h-4 mr-1.5 align-[-2px]"></i>血糖
+        </button>
+        <!-- 指标-血脂 -->
+        <button data-indicator="血脂" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant border border-outline-variant/20">
+          <i data-lucide="droplets" class="w-4 h-4 mr-1.5 align-[-2px]"></i>血脂
+        </button>
+        <!-- 指标-腰围 -->
+        <button data-indicator="腰围" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant border border-outline-variant/20">
+          <i data-lucide="rotate-3d" class="w-4 h-4 mr-1.5 align-[-2px]"></i>腰围
+        </button>
+        <!-- 指标-学习时长 -->
+        <button data-indicator="学习时长" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant border border-outline-variant/20">
+          <i data-lucide="timer" class="w-4 h-4 mr-1.5 align-[-2px]"></i>学习时长
+        </button>
+        <!-- 指标-睡眠时长 -->
+        <button data-indicator="睡眠时长" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant border border-outline-variant/20">
+          <i data-lucide="moon" class="w-4 h-4 mr-1.5 align-[-2px]"></i>睡眠时长
+        </button>
+        <!-- 指标-每日步数 -->
+        <button data-indicator="每日步数" class="indicator-chip px-4 py-2 rounded-full text-sm font-medium bg-surface-container text-on-surface-variant border border-outline-variant/20">
+          <i data-lucide="footprints" class="w-4 h-4 mr-1.5 align-[-2px]"></i>每日步数
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. 自定义目标输入 -->
+    <section class="px-4 mt-8">
+      <h3 class="text-base font-semibold text-on-surface mb-3">或自定义你的目标</h3>
+      <div class="bg-surface rounded-xl shadow-card p-4 space-y-4">
+        <div>
+          <label for="custom-goal-name" class="text-sm text-on-surface-variant block mb-1.5">自定义目标名</label>
+          <input id="custom-goal-name" class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="例如：3 个月读完 5 本书"/>
+        </div>
+        <div>
+          <label for="custom-indicator" class="text-sm text-on-surface-variant block mb-1.5">自定义指标</label>
+          <input id="custom-indicator" class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="例如：阅读本数、冥想分钟数"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 目标详情设置表单 -->
+    <section class="px-4 mt-8">
+      <h3 class="text-base font-semibold text-on-surface mb-3">目标详情</h3>
+      <div class="bg-surface rounded-xl shadow-card p-4 space-y-5">
+        <!-- 目标数值 -->
+        <div>
+          <label class="text-sm text-on-surface-variant block mb-1.5">目标数值</label>
+          <div class="flex gap-3">
+            <input id="goal-value" type="number" class="w-1/2 bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="如 5"/>
+            <select id="goal-unit" class="w-1/2 bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+              <option value="kg">kg（总目标）</option>
+              <option value="jin">斤（每周）</option>
+              <option value="pct">%</option>
+              <option value="min">分钟 / 天</option>
+              <option value="count">本 / 阅读</option>
+            </select>
+          </div>
+          <p class="text-xs text-on-surface-variant mt-2">示例：减重 5 kg 在 8 周内完成，每周稳步下降、不追求骤减。</p>
+        </div>
+
+        <!-- 起止时间 -->
+        <div>
+          <label class="text-sm text-on-surface-variant block mb-1.5">起止时间</label>
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <span class="text-xs text-on-surface-variant block mb-1">开始</span>
+              <input id="date-start" type="date" class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+            </div>
+            <div class="flex-1">
+              <span class="text-xs text-on-surface-variant block mb-1">结束</span>
+              <input id="date-end" type="date" class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- 每日打卡计划 -->
+        <div>
+          <label class="text-sm text-on-surface-variant block mb-3">每日打卡计划</label>
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <!-- 系统推荐（预选） -->
+            <button id="plan-sys" class="plan-mode px-3 py-2.5 rounded-xl text-sm font-semibold border-2 border-primary bg-primary/5 text-primary">系统推荐</button>
+            <!-- 自行设置 -->
+            <button id="plan-self" class="plan-mode px-3 py-2.5 rounded-xl text-sm font-semibold border-2 border-outline-variant/20 bg-surface text-on-surface-variant">自行设置</button>
+          </div>
+
+          <!-- 系统推荐计划面板：由大模型依据身体数据生成，附知识来源与免责 -->
+          <div id="plan-sys-panel" class="bg-surface-container-lowest rounded-xl p-4 space-y-3 border border-outline-variant/20">
+            <div class="flex items-center gap-2">
+              <span class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-primary">
+                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+              </span>
+              <div>
+                <p class="text-sm font-semibold text-on-surface">科学每日计划（预览）</p>
+                <p class="text-xs text-on-surface-variant">根据主人体质与目标生成</p>
+              </div>
+            </div>
+            <!-- 计划-任务1 -->
+            <div class="flex items-start gap-2.5">
+              <i data-lucide="check-circle-2" class="w-4.5 h-4.5 text-primary mt-0.5 shrink-0"></i>
+              <p class="text-sm text-on-surface">每日饮水 <span class="font-semibold text-primary">≥ 2000ml</span>，分时段匀速补水，避免一次性过量。</p>
+            </div>
+            <!-- 计划-任务2 -->
+            <div class="flex items-start gap-2.5">
+              <i data-lucide="check-circle-2" class="w-4.5 h-4.5 text-primary mt-0.5 shrink-0"></i>
+              <p class="text-sm text-on-surface">每周进行 <span class="font-semibold text-primary">3 次</span> 有氧运动，每次 30–40 分钟，强度循序渐进。</p>
+            </div>
+            <!-- 计划-任务3 -->
+            <div class="flex items-start gap-2.5">
+              <i data-lucide="check-circle-2" class="w-4.5 h-4.5 text-primary mt-0.5 shrink-0"></i>
+              <p class="text-sm text-on-surface">每日早晚各测一次体重并记录，固定时间、空腹测量更精准。</p>
+            </div>
+            <!-- 计划-任务4 -->
+            <div class="flex items-start gap-2.5">
+              <i data-lucide="check-circle-2" class="w-4.5 h-4.5 text-primary mt-0.5 shrink-0"></i>
+              <p class="text-sm text-on-surface">每周 <span class="font-semibold text-primary">1 次</span> 复盘体脂与腰围变化，动态校准饮食结构。</p>
+            </div>
+            <!-- 知识来源 -->
+            <div class="mt-2 pt-3 border-t border-outline-variant/20">
+              <p class="text-xs text-on-surface-variant flex items-center gap-1">
+                <i data-lucide="library" class="w-3.5 h-3.5"></i>知识来源：中国居民膳食指南（2022）· WHO 体力活动指南
+              </p>
+              <p class="text-xs text-on-surface-variant/80 mt-1 flex items-start gap-1">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>
+                以上计划基于通用科学建议生成，仅供参考，不替代专业医疗意见；如有基础疾病请遵医嘱调整。
+              </p>
+            </div>
+          </div>
+
+          <!-- 自行设置面板 -->
+          <div id="plan-self-panel" class="hidden space-y-3">
+            <div class="bg-surface-container-lowest rounded-xl p-4 space-y-3 border border-outline-variant/20">
+              <div class="flex items-center justify-between">
+                <label for="plan-time-1" class="text-sm text-on-surface-variant">每日打卡时间</label>
+                <input id="plan-time-1" type="time" class="bg-surface-container border-none rounded-xl px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+              </div>
+              <div>
+                <label for="plan-reminder-note" class="text-sm text-on-surface-variant block mb-1.5">打卡提醒内容（备注）</label>
+                <textarea id="plan-reminder-note" rows="2" class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none" placeholder="例如：记录今日体重与饮食，鼓励自己今天也做到了。"></textarea>
+              </div>
+              <button id="btn-add-plan" class="w-full bg-surface-container-high text-on-surface rounded-xl py-2.5 text-sm font-semibold hover:bg-surface-container-highest active:scale-[0.98] transition-all inline-flex items-center justify-center gap-1.5">
+                <i data-lucide="plus" class="w-4 h-4"></i>添加一条打卡计划
+              </button>
+            </div>
+            <!-- 打卡-已有条目1 -->
+            <div class="flex items-center justify-between bg-surface rounded-xl p-3.5 border border-outline-variant/20">
+              <div class="flex items-center gap-2.5">
+                <i data-lucide="bell" class="w-4 h-4 text-secondary"></i>
+                <div>
+                  <p class="text-sm font-medium text-on-surface">早晚体重记录</p>
+                  <p class="text-xs text-on-surface-variant">每天 07:30 · 21:00</p>
+                </div>
+              </div>
+              <button class="text-on-surface-variant hover:text-error transition-colors" aria-label="删除打卡计划">
+                <i data-lucide="trash-2" class="w-4.5 h-4.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 提示：完成目标可获得守护积分 -->
+    <section class="px-4 mt-6">
+      <div class="flex items-center gap-3 bg-primary-container/50 rounded-xl px-4 py-3">
+        <i data-lucide="medal" class="w-5 h-5 text-primary shrink-0"></i>
+        <p class="text-xs text-on-surface-variant">设定目标后将进入暖暖的「监督之旅」，每日打卡可获得守护积分，让坚持有回响。</p>
+      </div>
+    </section>
+
+    <!-- 5. 底部主按钮 -->
+    <section class="px-4 mt-8">
+      <button id="btn-submit" class="w-full bg-primary text-on-primary py-4 rounded-xl text-base font-semibold shadow-card
+                     hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+        <i data-lucide="check" class="w-5 h-5"></i>完成，开启监督之旅
+      </button>
+    </section>
+
+  </main>
+
+  <script>
+    // 导航辅助函数
+    function navPush(route) {
+        console.log(`[原型演示] PUSH 到: ${route}`);
+        window.location.href = route;
+    }
+    function navReplace(route) {
+        console.log(`[原型演示] REPLACE 为: ${route}`);
+        window.location.replace(route);
+    }
+    function navReset(route) {
+        console.log(`[原型演示] RESET 到: ${route}`);
+        window.location.href = route;
+    }
+    function navBack() {
+        console.log(`[原型演示] BACK 返回上一页`);
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = 'profile.html';
+    }
+
+    $(function () {
+        // 返回按钮
+        $('#header-back').on('click', function () {
+            navBack();
+        });
+
+        // 目标类型：单选切换（点击选中，互斥）
+        $('#goal-type-list').on('click', '.goal-type', function () {
+            $('#goal-type-list .goal-type').each(function () {
+                $(this).removeClass('border-primary bg-primary/5').addClass('border-outline-variant/20');
+            });
+            $(this).removeClass('border-outline-variant/20').addClass('border-primary bg-primary/5');
+            console.log('已选择目标类型:', $(this).data('goal'));
+        });
+
+        // 指标胶囊：可多选，点击切换选中态
+        $('#indicator-list').on('click', '.indicator-chip', function () {
+            const $chip = $(this);
+            const isSelected = $chip.hasClass('bg-primary');
+            if (isSelected) {
+                $chip.removeClass('bg-primary text-on-primary').addClass('bg-surface-container text-on-surface-variant border border-outline-variant/20');
+            } else {
+                $chip.removeClass('bg-surface-container text-on-surface-variant border border-outline-variant/20').addClass('bg-primary text-on-primary');
+            }
+            const count = $('#indicator-list .indicator-chip.bg-primary').length;
+            $('#indicator-count').text('已选 ' + count + ' 项');
+            console.log('指标切换: ', $(this).data('indicator'), '选中', !isSelected);
+        });
+
+        // 打卡计划模式切换：系统推荐 / 自行设置
+        $('#plan-sys').on('click', function () {
+            $('#plan-sys').removeClass('border-outline-variant/20 bg-surface text-on-surface-variant').addClass('border-primary bg-primary/5 text-primary');
+            $('#plan-self').removeClass('border-primary bg-primary/5 text-primary').addClass('border-outline-variant/20 bg-surface text-on-surface-variant');
+            $('#plan-sys-panel').removeClass('hidden');
+            $('#plan-self-panel').addClass('hidden');
+        });
+        $('#plan-self').on('click', function () {
+            $('#plan-self').removeClass('border-outline-variant/20 bg-surface text-on-surface-variant').addClass('border-primary bg-primary/5 text-primary');
+            $('#plan-sys').removeClass('border-primary bg-primary/5 text-primary').addClass('border-outline-variant/20 bg-surface text-on-surface-variant');
+            $('#plan-self-panel').removeClass('hidden');
+            $('#plan-sys-panel').addClass('hidden');
+        });
+
+        // 添加打卡计划（自行设置面板内）- 复杂交互：这里绑定入口，后续需完整实现。
+        // 1. 点击后应在 #plan-self-panel 内的列表中新增一条打卡条目（时间 + 备注）
+        // 2. 条目应带有删除按钮，点击可移除该条目
+        // 3. 新增条目与已有条目样式一致，可调用统一渲染逻辑复用
+        $('#btn-add-plan').on('click', function () {
+            console.log('添加自定义打卡计划（此处为原型，后续应动态插入一条打卡条目）');
+        });
+
+        // 删除打卡计划 - 简单交互：确认后从列表移除该节点
+        $('#plan-self-panel').on('click', '.btn-del-plan, button[aria-label="删除打卡计划"]', function () {
+            $(this).closest('.flex.items-center.justify-between').remove();
+            console.log('删除一条自定义打卡计划');
+        });
+
+        // 底部提交按钮：校验表单后跳转目标详情/开启监督
+        $('#btn-submit').on('click', function () {
+            const goal = $('#goal-value').val() || '未填写';
+            console.log('提交目标：', { 目标类型: $('#goal-type-list .goal-type.border-primary').data('goal'), 目标数值: goal, 单位: $('#goal-unit').val() });
+            navPush('goal-detail.html?source=goal-setup');
+        });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

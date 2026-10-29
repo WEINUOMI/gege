@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 字体 -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影（暖调低透明） === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- ===== 二级页：顶部 Header（带返回按钮） ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <button id="btn-back" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors" aria-label="返回">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </button>
+    <h1 class="font-display text-base font-semibold text-on-surface">暖心厨房 · 饮食推荐</h1>
+    <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container transition-colors" aria-label="更多">
+      <i data-lucide="ellipsis-vertical" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
+    <!-- @main-content:start -->
+
+    <!-- 今天是减重第几天：问候横幅 -->
+    <section class="px-4 pt-4 pb-2">
+      <div class="bg-gradient-to-br from-primary-container/60 to-secondary-container/40 rounded-2xl p-4 flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary shrink-0">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-on-surface">主人早安 ☀️ 今天也要好好吃饭呀</p>
+          <p class="text-xs text-on-surface-variant mt-1">结合主人身体状况与<b>减重目标</b>，为您整理了今天的科学饮食建议与菜谱。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1. 智能推荐入口卡：今日三餐建议 -->
+    <section class="px-4 pt-4">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-bold text-on-surface">今日智能推荐</h2>
+        <button id="btn-today-plan-help" class="text-xs text-primary font-medium inline-flex items-center gap-1">
+          <i data-lucide="help-circle" class="w-4 h-4"></i>为什么这样配
+        </button>
+      </div>
+      <p class="text-xs text-on-surface-variant mb-3">基于主人当前身体状况 + 减重目标，推荐的每日膳食搭配（约 1600 千卡/日）</p>
+
+      <div class="space-y-3">
+        <!-- 早餐卡 -->
+        <div id="meal-breakfast" class="bg-surface rounded-xl shadow-card p-4 cursor-pointer">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-secondary/15 text-secondary">早餐</span>
+            <span class="text-xs text-on-surface-variant">约 420 千卡</span>
+            <span class="ml-auto flex items-center justify-center w-8 h-8 rounded-full text-primary bg-primary/10">
+              <i data-lucide="camera" class="w-4 h-4" id="icon-camera-breakfast"></i>
+            </span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1517673132405-a56a62b18caf" alt="燕麦杂粮粥配水煮蛋与一杯温牛奶的早餐" data-category="食物" class="w-full h-40 object-cover rounded-xl mb-2"/>
+          <p class="text-sm font-semibold text-on-surface">燕麦杂粮粥 · 水煮蛋 · 温牛奶</p>
+          <p class="text-sm text-on-surface-variant mt-1 leading-relaxed">全谷物提供慢碳水与膳食纤维，蛋白质助力饱腹感，帮你平稳开启一天。</p>
+        </div>
+
+        <!-- 午餐卡 -->
+        <div id="meal-lunch" class="bg-surface rounded-xl shadow-card p-4 cursor-pointer">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/15 text-primary">午餐</span>
+            <span class="text-xs text-on-surface-variant">约 580 千卡</span>
+            <span class="ml-auto flex items-center justify-center w-8 h-8 rounded-full text-primary bg-primary/10">
+              <i data-lucide="camera" class="w-4 h-4" id="icon-camera-lunch"></i>
+            </span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd" alt="香煎三文鱼配杂粮饭与时令蔬菜沙拉的午餐" data-category="食物" class="w-full h-40 object-cover rounded-xl mb-2"/>
+          <p class="text-sm font-semibold text-on-surface">香煎三文鱼 · 杂粮饭 · 蔬菜沙拉</p>
+          <p class="text-sm text-on-surface-variant mt-1 leading-relaxed">三文鱼富含优质蛋白与 Omega-3 脂肪酸，搭配多种蔬菜，营养素全面又低负担。</p>
+        </div>
+
+        <!-- 晚餐卡 -->
+        <div id="meal-dinner" class="bg-surface rounded-xl shadow-card p-4 cursor-pointer">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/15 text-primary">晚餐</span>
+            <span class="text-xs text-on-surface-variant">约 550 千卡</span>
+            <span class="ml-auto flex items-center justify-center w-8 h-8 rounded-full text-primary bg-primary/10">
+              <i data-lucide="camera" class="w-4 h-4" id="icon-camera-dinner"></i>
+            </span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1547592166-23ac45744acd" alt="鲜菇豆腐蔬菜汤配清蒸鸡胸肉与少量主食的晚餐" data-category="食物" class="w-full h-40 object-cover rounded-xl mb-2"/>
+          <p class="text-sm font-semibold text-on-surface">鲜菇豆腐蔬菜汤 · 清蒸鸡胸肉</p>
+          <p class="text-sm text-on-surface-variant mt-1 leading-relaxed">轻食为主、睡前 3 小时清淡用餐，帮助主人控糖控脂，安稳入睡。</p>
+        </div>
+      </div>
+
+      <!-- 记录饮食入口 -->
+      <button id="btn-log-meal" class="w-full mt-3 bg-primary/10 text-primary border-none rounded-xl py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-primary/20 active:scale-[0.98] transition-all">
+        <i data-lucide="image-plus" class="w-4 h-4"></i>记录今日饮食
+        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+      </button>
+    </section>
+
+    <!-- 2. 食材找食谱 -->
+    <section class="px-4 pt-8">
+      <h2 class="text-xl font-bold text-on-surface mb-1">食材找食谱</h2>
+      <p class="text-xs text-on-surface-variant mb-3">输入冰箱现有食材，为您推荐符合减重目标的做法</p>
+
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <textarea id="input-ingredients" rows="2" class="w-full bg-surface-container border-none rounded-xl px-4 py-3 text-base text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none mb-3" placeholder="例：鸡胸肉、西兰花、鸡蛋、豆腐、西红柿…">鸡胸肉、西兰花、鸡蛋、豆腐</textarea>
+        <button id="btn-recommend-by-target" class="w-full bg-primary text-on-primary border-none py-3.5 rounded-xl text-base font-semibold hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+          <i data-lucide="chef-hat" class="w-5 h-5"></i>根据今天目标推荐菜谱
+        </button>
+      </div>
+
+      <!-- 推荐菜谱列表 -->
+      <div id="recipe-list" class="space-y-3 mt-3">
+        <!-- 菜谱-1 -->
+        <div class="bg-surface rounded-xl shadow-card p-4">
+          <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d" alt="低油鸡胸肉时蔬炒食的减脂餐" data-category="食物" class="w-full h-36 object-cover rounded-xl mb-2"/>
+          <p class="text-sm font-semibold text-on-surface">低油鸡胸肉时蔬炒</p>
+          <p class="text-xs text-on-surface-variant mt-1">食材：鸡胸肉、西兰花、胡萝卜、蒜</p>
+          <p class="text-sm text-on-surface mt-1 leading-relaxed">少油快炒，高蛋白低脂，饱腹感强，适合减重期午餐。</p>
+          <div class="flex items-center justify-between mt-2 text-xs text-on-surface-variant">
+            <span class="inline-flex items-center gap-1"><i data-lucide="flame" class="w-3.5 h-3.5 text-warning"></i>约 320 千卡</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="leaf" class="w-3.5 h-3.5 text-success"></i>高蛋白 · 低碳水</span>
+          </div>
+        </div>
+        <!-- 菜谱-2 -->
+        <div class="bg-surface rounded-xl shadow-card p-4">
+          <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c" alt="虾仁鸡蛋豆腐蒸蛋的蛋白质料理" data-category="食物" class="w-full h-36 object-cover rounded-xl mb-2"/>
+          <p class="text-sm font-semibold text-on-surface">虾仁蛋豆腐蒸</p>
+          <p class="text-xs text-on-surface-variant mt-1">食材：鸡蛋、豆腐、虾仁、香油</p>
+          <p class="text-sm text-on-surface mt-1 leading-relaxed">清蒸保留营养，软嫩易消化，适合早、晚餐补充优质蛋白。</p>
+          <div class="flex items-center justify-between mt-2 text-xs text-on-surface-variant">
+            <span class="inline-flex items-center gap-1"><i data-lucide="flame" class="w-3.5 h-3.5 text-warning"></i>约 260 千卡</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="leaf" class="w-3.5 h-3.5 text-success"></i>高蛋白 · 低热量</span>
+          </div>
+        </div>
+        <!-- 菜谱-3 -->
+        <div class="bg-surface rounded-xl shadow-card p-4">
+          <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999" alt="彩虹时蔬牛肉沙拉的营养轻食" data-category="食物" class="w-full h-36 object-cover rounded-xl mb-2"/>
+          <p class="text-sm font-semibold text-on-surface">彩虹蔬菜牛肉沙拉</p>
+          <p class="text-xs text-on-surface-variant mt-1">食材：西红柿、生菜、黄瓜、瘦牛肉</p>
+          <p class="text-sm text-on-surface mt-1 leading-relaxed">多色蔬菜提供多种维生素，瘦牛肉补充铁与蛋白质，清爽不油腻。</p>
+          <div class="flex items-center justify-between mt-2 text-xs text-on-surface-variant">
+            <span class="inline-flex items-center gap-1"><i data-lucide="flame" class="w-3.5 h-3.5 text-warning"></i>约 300 千卡</span>
+            <span class="inline-flex items-center gap-1"><i data-lucide="leaf" class="w-3.5 h-3.5 text-success"></i>高纤维 · 补铁</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-more-recipe" class="w-full mt-3 bg-surface-container text-on-surface-variant border-none py-3 rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-surface-container-high active:scale-[0.98] transition-all">
+        <i data-lucide="plus" class="w-4 h-4"></i>加载更多菜谱
+      </button>
+    </section>
+
+    <!-- 3. 营养小贴士卡 -->
+    <section class="px-4 pt-8">
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="lightbulb" class="w-5 h-5 text-warning"></i>
+          <h2 class="text-base font-semibold text-on-surface">营养小贴士</h2>
+        </div>
+        <ul class="space-y-2.5 text-sm text-on-surface leading-relaxed">
+          <li class="flex gap-2"><span class="text-primary mt-0.5"><i data-lucide="check" class="w-4 h-4"></i></span>每餐吃到 7 分饱，多菜少饭，先喝汤再吃菜后吃饭，可提升饱腹感。</li>
+          <li class="flex gap-2"><span class="text-primary mt-0.5"><i data-lucide="check" class="w-4 h-4"></i></span>每天蔬果 300–500g，深色蔬菜占一半，主食多选全谷物与杂豆。</li>
+          <li class="flex gap-2"><span class="text-primary mt-0.5"><i data-lucide="check" class="w-4 h-4"></i></span>每天饮水 1500–1700ml，少喝含糖饮料，控油控盐（盐 &lt; 5g/日）。</li>
+          <li class="flex gap-2"><span class="text-primary mt-0.5"><i data-lucide="check" class="w-4 h-4"></i></span>规律三餐、细嚼慢咽，晚餐尽量清淡并远离夜宵。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 4. 知识库来源卡 -->
+    <section class="px-4 pt-8">
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="book-open" class="w-5 h-5 text-primary"></i>
+          <h2 class="text-base font-semibold text-on-surface">推荐依据 · 知识库来源</h2>
+        </div>
+        <p class="text-sm text-on-surface leading-relaxed mb-2">以上建议与菜谱基于以下权威来源生成：</p>
+        <ul class="space-y-1.5 text-sm text-on-surface-variant">
+          <li>· 《中国居民膳食指南（2022）》</li>
+          <li>· 《中国食物成分表（标准版·第 6 版）》</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 5. 免责声明卡 -->
+    <section class="px-4 pt-6 pb-6">
+      <div class="bg-secondary-container/40 rounded-2xl p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="shield-check" class="w-5 h-5 text-secondary"></i>
+          <h2 class="text-sm font-semibold text-on-surface">温馨提醒</h2>
+        </div>
+        <p class="text-xs text-on-surface-variant leading-relaxed">暖心的饮食建议定位为<b>健康生活方式管理</b>，不构成医疗诊断，亦不提供药物剂量。若主人患有糖尿病、肾病、痛风等特定疾病，请务必咨询专业医生或临床营养师后再安排饮食。</p>
+      </div>
+    </section>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <!-- 推荐理由底部弹窗 -->
+  <div id="modal-reason" class="fixed inset-0 bg-black/50 z-50 hidden items-end">
+    <div class="bg-surface rounded-t-2xl w-full max-h-[80vh] overflow-y-auto p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <div class="flex items-center justify-between mb-4">
+        <h3 id="reason-title" class="font-display text-lg font-semibold text-on-surface">推荐理由</h3>
+        <button id="btn-close-reason" class="w-9 h-9 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container transition-colors" aria-label="关闭">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p id="reason-body" class="text-sm text-on-surface leading-relaxed"></p>
+    </div>
+  </div>
+
+  <script>
+    // ===== 导航辅助函数 =====
+    function navPush(route) {
+        console.log(`[原型演示] PUSH 到: ${route}`);
+        window.location.href = route;
+    }
+    function navReplace(route) {
+        console.log(`[原型演示] REPLACE 为: ${route}`);
+        window.location.replace(route);
+    }
+    function navReset(route) {
+        console.log(`[原型演示] RESET 到: ${route}`);
+        window.location.href = route;
+    }
+    function navBack() {
+        console.log(`[原型演示] BACK 返回上一页`);
+        if(window.history.length > 1) window.history.back();
+    }
+
+    // ===== 各卡推荐理由文案 =====
+    const reasonMap = {
+      'breakfast': {
+        title: '为什么推荐这份早餐？',
+        body: '主人体重管理期间优先保证蛋白质和膳食纤维摄入。燕麦杂粮粥含全谷物与可溶性膳食纤维，有助于平稳血糖、延长饱腹；水煮蛋提供优质蛋白；温牛奶补充钙质。整餐约 420 千卡，碳蛋比合理，适合作为减重期清爽开局。'
+      },
+      'lunch': {
+        title: '为什么推荐这份午餐？',
+        body: '午餐需兼顾精力与热量控制。三文鱼富含 Omega-3 脂肪酸与优质蛋白，帮助维持肌肉、抗炎；杂粮饭提供持久碳水；蔬菜沙拉补充维生素与膳食纤维。整餐约 580 千卡，是减重目标下"高蛋白 + 中碳水"的示范搭配。'
+      },
+      'dinner': {
+        title: '为什么推荐这份晚餐？',
+        body: '晚餐宜清淡少负担。鲜菇豆腐蔬菜汤清爽、水分足，配合清蒸鸡胸肉补充蛋白，控糖控脂，不易积存脂肪。建议睡前 3 小时用完，配合足量饮水，帮助安稳入睡、维持次日代谢。整餐约 550 千卡。'
+      }
+    };
+
+    $(function () {
+      // 返回
+      $('#btn-back').on('click', function () { navBack(); });
+
+      // 三餐卡片点击 → 查看推荐理由
+      function openReason(key) {
+          const r = reasonMap[key];
+          $('#reason-title').text(r.title);
+          $('#reason-body').text(r.body);
+          $('#modal-reason').removeClass('hidden').addClass('flex');
+      }
+      $('#meal-breakfast').on('click', function () { openReason('breakfast'); });
+      $('#meal-lunch').on('click', function () { openReason('lunch'); });
+      $('#meal-dinner').on('click', function () { openReason('dinner'); });
+      $('#btn-today-plan-help').on('click', function () { openReason('breakfast'); });
+      $('#btn-close-reason').on('click', function () {
+          $('#modal-reason').addClass('hidden').removeClass('flex');
+      });
+      $(document).on('click', '#modal-reason', function (e) {
+          if (e.target === this) $('#modal-reason').addClass('hidden').removeClass('flex');
+      });
+
+      // 拍照记录饮食 - 第三方接口
+      $('#btn-log-meal').on('click', function () {
+          console.log('需要调用第三方相机/图库接口实现拍照上传并识别记录饮食');
+      });
+      $('#icon-camera-breakfast').on('click', function (e) {
+          e.stopPropagation();
+          console.log('需要调用第三方相机接口拍照记录早餐');
+      });
+      $('#icon-camera-lunch').on('click', function (e) {
+          e.stopPropagation();
+          console.log('需要调用第三方相机接口拍照记录午餐');
+      });
+      $('#icon-camera-dinner').on('click', function (e) {
+          e.stopPropagation();
+          console.log('需要调用第三方相机接口拍照记录晚餐');
+      });
+
+      // 根据目标推荐菜谱
+      $('#btn-recommend-by-target').on('click', function () {
+          const v = $('#input-ingredients').val().trim();
+          console.log('根据今日目标 + 食材:', v, '生成推荐菜谱');
+      });
+
+      // 加载更多菜谱 - 后续应通过食材与目标接口获取更多菜谱并追加到 #recipe-list
+      $('#btn-more-recipe').on('click', function () {
+          console.log('应加载更多符合减重目标的菜谱并追加到 #recipe-list');
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

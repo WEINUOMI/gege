@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+  <!-- 字体（按需，系统字体时省略；只能用 Google 字体，CSS 地址前缀：https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影（暖调低透明） === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- ===== 二级页：顶部 Header（带返回按钮） ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <button id="btn-back" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </button>
+    <h1 class="font-display text-base font-semibold text-on-surface">轻盈动起来 · 运动推荐</h1>
+    <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container transition-colors">
+      <i data-lucide="ellipsis-vertical" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-10">
+    <!-- @main-content:start -->
+
+    <!-- 当前目标概览 -->
+    <section class="px-4 pt-4 pb-1">
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-on-surface-variant">主人当前阶段目标</p>
+            <p class="text-lg font-bold text-on-surface mt-0.5">减重 · 活力燃脂</p>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary">
+            <i data-lucide="target" class="w-3.5 h-3.5 mr-1"></i>进行中
+          </span>
+        </div>
+        <p class="text-sm text-on-surface-variant mt-2 leading-relaxed">根据《ACSM 运动测试与运动处方指南》与主人的身体状况，为您匹配安全温和、可持续坚持的运动方案。您也可以在下方案例中切换查看不同目标的推荐。</p>
+      </div>
+    </section>
+
+    <!-- 目标切换（简单交互：show/hide） -->
+    <section class="px-4 pt-5">
+      <p class="text-base font-semibold text-on-surface mb-3">推荐方案 · 选择目标查看</p>
+      <div id="goal-chips" class="flex gap-2">
+        <button id="goal-chip-jianzhong" data-group="group-jianzhong" class="goal-chip px-4 py-2 rounded-full text-sm font-semibold bg-primary text-on-primary">减重</button>
+        <button id="goal-chip-zengji" data-group="group-zengji" class="goal-chip px-4 py-2 rounded-full text-sm font-semibold bg-surface-container text-on-surface-variant">增肌</button>
+        <button id="goal-chip-sangao" data-group="group-sangao" class="goal-chip px-4 py-2 rounded-full text-sm font-semibold bg-surface-container text-on-surface-variant">三高管理</button>
+      </div>
+
+      <!-- ===== 减重推荐运动组 ===== -->
+      <div id="group-jianzhong" class="goal-group mt-3 space-y-3">
+        <!-- 推荐运动卡-1 快走 -->
+        <div class="bg-surface rounded-xl shadow-card p-3">
+          <div class="flex gap-3">
+            <div class="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1504608524841-42fe6f032b4b" alt="主人清晨户外快走的运动场景" data-category="运动体育" class="w-full h-full object-cover"/>
+              <button id="video-walk" class="video-play absolute inset-0 flex items-center justify-center bg-black/20 text-white"><i data-lucide="play" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-base font-semibold text-on-surface">快走</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning/15 text-warning">中等强度</span>
+              </div>
+              <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                <span class="inline-flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1"></i>40 分钟</span>
+                <span class="inline-flex items-center"><i data-lucide="flame" class="w-3.5 h-3.5 mr-1"></i>约 240 千卡</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">温和燃脂、保护关节，适合减重初期建立运动习惯，对三高人群同样友好。</p>
+            </div>
+          </div>
+        </div>
+        <!-- 推荐运动卡-2 慢跑 -->
+        <div class="bg-surface rounded-xl shadow-card p-3">
+          <div class="flex gap-3">
+            <div class="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5" alt="主人在公园慢跑的运动场景" data-category="运动体育" class="w-full h-full object-cover"/>
+              <button id="video-jog" class="video-play absolute inset-0 flex items-center justify-center bg-black/20 text-white"><i data-lucide="play" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-base font-semibold text-on-surface">慢跑</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning/15 text-warning">中高强度</span>
+              </div>
+              <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                <span class="inline-flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1"></i>30 分钟</span>
+                <span class="inline-flex items-center"><i data-lucide="flame" class="w-3.5 h-3.5 mr-1"></i>约 320 千卡</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">显著提升心肺耐力、加速燃脂，建议循序渐进，从走跑交替开始。</p>
+            </div>
+          </div>
+        </div>
+        <!-- 推荐运动卡-3 游泳 -->
+        <div class="bg-surface rounded-xl shadow-card p-3">
+          <div class="flex gap-3">
+            <div class="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1530549387789-4c1017266635" alt="主人泳池中游泳的运动场景" data-category="运动体育" class="w-full h-full object-cover"/>
+              <button id="video-swim" class="video-play absolute inset-0 flex items-center justify-center bg-black/20 text-white"><i data-lucide="play" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-base font-semibold text-on-surface">游泳</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning/15 text-warning">中高强度</span>
+              </div>
+              <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                <span class="inline-flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1"></i>40 分钟</span>
+                <span class="inline-flex items-center"><i data-lucide="flame" class="w-3.5 h-3.5 mr-1"></i>约 380 千卡</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">全身性燃脂、几乎零冲击，是膝盖及体重较大主人的理想选择。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 增肌推荐运动组 ===== -->
+      <div id="group-zengji" class="goal-group mt-3 space-y-3 hidden">
+        <!-- 推荐运动卡-1 力量训练 -->
+        <div class="bg-surface rounded-xl shadow-card p-3">
+          <div class="flex gap-3">
+            <div class="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e" alt="主人做力量训练的运动场景" data-category="运动体育" class="w-full h-full object-cover"/>
+              <button id="video-strength" class="video-play absolute inset-0 flex items-center justify-center bg-black/20 text-white"><i data-lucide="play" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-base font-semibold text-on-surface">力量训练</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/15 text-primary">增肌主力</span>
+              </div>
+              <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                <span class="inline-flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1"></i>45 分钟</span>
+                <span class="inline-flex items-center"><i data-lucide="flame" class="w-3.5 h-3.5 mr-1"></i>约 260 千卡</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">复合动作刺激全身肌群，帮助主人提升肌肉量与基础代谢。</p>
+            </div>
+          </div>
+        </div>
+        <!-- 推荐运动卡-2 瑜伽 -->
+        <div class="bg-surface rounded-xl shadow-card p-3">
+          <div class="flex gap-3">
+            <div class="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773" alt="主人做瑜伽体式的运动场景" data-category="运动体育" class="w-full h-full object-cover"/>
+              <button id="video-yoga" class="video-play absolute inset-0 flex items-center justify-center bg-black/20 text-white"><i data-lucide="play" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-base font-semibold text-on-surface">瑜伽</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success/15 text-success">低强度</span>
+              </div>
+              <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                <span class="inline-flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1"></i>35 分钟</span>
+                <span class="inline-flex items-center"><i data-lucide="flame" class="w-3.5 h-3.5 mr-1"></i>约 150 千卡</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">改善柔韧与核心稳定性，作为力量训练后的放松恢复极佳。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 三高管理推荐运动组 ===== -->
+      <div id="group-sangao" class="goal-group mt-3 space-y-3 hidden">
+        <!-- 推荐运动卡-1 太极 -->
+        <div class="bg-surface rounded-xl shadow-card p-3">
+          <div class="flex gap-3">
+            <div class="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b" alt="主人在晨间练太极舒缓的运动场景" data-category="运动体育" class="w-full h-full object-cover"/>
+              <button id="video-taichi" class="video-play absolute inset-0 flex items-center justify-center bg-black/20 text-white"><i data-lucide="play" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-base font-semibold text-on-surface">太极</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success/15 text-success">低强度</span>
+              </div>
+              <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                <span class="inline-flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1"></i>40 分钟</span>
+                <span class="inline-flex items-center"><i data-lucide="flame" class="w-3.5 h-3.5 mr-1"></i>约 150 千卡</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">舒缓规律、平稳心率，对血压、血脂及血糖的长期管理十分友好。</p>
+            </div>
+          </div>
+        </div>
+        <!-- 推荐运动卡-2 快走 -->
+        <div class="bg-surface rounded-xl shadow-card p-3">
+          <div class="flex gap-3">
+            <div class="relative w-24 h-24 rounded-lg overflow-hidden shrink-0">
+              <img src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8" alt="主人休闲快走的运动场景" data-category="运动体育" class="w-full h-full object-cover"/>
+              <button id="video-walk2" class="video-play absolute inset-0 flex items-center justify-center bg-black/20 text-white"><i data-lucide="play" class="w-7 h-7"></i></button>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-base font-semibold text-on-surface">快走</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning/15 text-warning">中等强度</span>
+              </div>
+              <div class="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
+                <span class="inline-flex items-center"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1"></i>50 分钟</span>
+                <span class="inline-flex items-center"><i data-lucide="flame" class="w-3.5 h-3.5 mr-1"></i>约 300 千卡</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">对关节冲击小，可长期坚持，有效帮助改善胰岛素敏感性。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 今日运动计划卡 -->
+    <section class="px-4 pt-6">
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <div class="flex items-center justify-between">
+          <p class="text-base font-semibold text-on-surface">今日运动计划</p>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/15 text-primary">约 75 分钟</span>
+        </div>
+
+        <ul id="plan-list" class="mt-3 space-y-2">
+          <!-- 计划项-1 快走 -->
+          <li class="plan-item flex items-center gap-3 bg-surface-container rounded-lg px-3 py-2.5" data-id="walk">
+            <button class="plan-check w-6 h-6 rounded-full border-2 border-on-surface-variant/40 flex items-center justify-center text-transparent"><i data-lucide="check" class="w-3.5 h-3.5"></i></button>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-on-surface">快走</p>
+              <p class="text-xs text-on-surface-variant">40 分钟 · 约 240 千卡</p>
+            </div>
+            <span class="text-xs text-on-surface-variant">✔ 建议完成</span>
+          </li>
+          <!-- 计划项-2 舒缓拉伸 -->
+          <li class="plan-item flex items-center gap-3 bg-surface-container rounded-lg px-3 py-2.5" data-id="stretch">
+            <button class="plan-check w-6 h-6 rounded-full border-2 border-on-surface-variant/40 flex items-center justify-center text-transparent"><i data-lucide="check" class="w-3.5 h-3.5"></i></button>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-on-surface">舒缓拉伸</p>
+              <p class="text-xs text-on-surface-variant">15 分钟 · 助放松</p>
+            </div>
+            <span class="text-xs text-on-surface-variant">✔ 建议完成</span>
+          </li>
+        </ul>
+
+        <!-- 运动时间选择 -->
+        <div class="mt-4 pt-4 border-t border-outline-variant/20">
+          <p class="text-sm font-semibold text-on-surface flex items-center"><i data-lucide="bell" class="w-4 h-4 mr-1.5 text-primary"></i>选择运动时间</p>
+          <div id="time-options" class="flex gap-2 mt-3 flex-wrap">
+            <button id="time-1" data-time="07:00" class="time-opt px-4 py-2 rounded-full text-sm font-semibold bg-surface-container text-on-surface-variant">07:00</button>
+            <button id="time-2" data-time="12:30" class="time-opt px-4 py-2 rounded-full text-sm font-semibold bg-surface-container text-on-surface-variant">12:30</button>
+            <button id="time-3" data-time="19:00" class="time-opt px-4 py-2 rounded-full text-sm font-semibold bg-surface-container text-on-surface-variant">19:00</button>
+            <button id="time-4" data-time="21:00" class="time-opt px-4 py-2 rounded-full text-sm font-semibold bg-surface-container text-on-surface-variant">21:00</button>
+          </div>
+          <div class="flex items-center gap-2 mt-3">
+            <button id="btn-set-remind" class="flex-1 bg-primary text-on-primary py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+              <i data-lucide="clock" class="w-4 h-4"></i>按时提醒我
+            </button>
+          </div>
+          <p id="remind-status" class="text-xs text-on-surface-variant mt-2 hidden">🔔 已设置 <span id="remind-time">19:00</span> 的运动提醒，届时会轻提醒主人。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 完成打卡说明卡 -->
+    <section class="px-4 pt-6">
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <p class="text-base font-semibold text-on-surface flex items-center"><i data-lucide="badge-check" class="w-4 h-4 mr-1.5 text-primary"></i>完成运动打卡</p>
+        <p class="text-sm text-on-surface mt-2 leading-relaxed">为了真实记录主人的每一次坚持，打卡前需要上传本次运动的<strong>视频或照片</strong>作为凭证，审核通过后即可计入打卡并<strong>获得积分</strong>。</p>
+        <ul class="mt-3 space-y-1.5 text-sm text-on-surface-variant">
+          <li class="flex items-start gap-2"><i data-lucide="video" class="w-4 h-4 mt-0.5 text-secondary"></i>运动视频：10 秒以上，能清晰看到运动过程。</li>
+          <li class="flex items-start gap-2"><i data-lucide="image" class="w-4 h-4 mt-0.5 text-secondary"></i>运动照片：需含运动记录或现场照片。</li>
+          <li class="flex items-start gap-2"><i data-lucide="sparkles" class="w-4 h-4 mt-0.5 text-secondary"></i>打卡成功 +35 积分，连续坚持还有额外奖励。</li>
+        </ul>
+        <button id="btn-checkin" class="w-full mt-4 bg-secondary text-on-secondary py-3.5 rounded-xl text-base font-semibold hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+          <i data-lucide="clipboard-check" class="w-5 h-5"></i>去打卡
+        </button>
+      </div>
+    </section>
+
+    <!-- 知识来源与免责声明 -->
+    <section class="px-4 pt-6 space-y-3 pb-4">
+      <div class="bg-surface rounded-xl shadow-card p-4">
+        <p class="text-sm font-semibold text-on-surface flex items-center"><i data-lucide="book-open" class="w-4 h-4 mr-1.5 text-primary"></i>运动知识来源</p>
+        <p class="text-xs text-on-surface-variant mt-2 leading-relaxed">本推荐方案依据《ACSM 运动测试与运动处方指南》《中国成人身体活动指南》及 WHO 身体活动建议制定，并结合主人的目标与身体状况进行个性化匹配。</p>
+      </div>
+      <div class="bg-surface rounded-xl shadow-card p-4 border border-outline-variant/20">
+        <p class="text-xs font-semibold text-on-surface flex items-center"><i data-lucide="shield-check" class="w-4 h-4 mr-1.5 text-warning"></i>免责声明</p>
+        <p class="text-xs text-on-surface-variant mt-1.5 leading-relaxed">本页面内容定位为<strong>「健康生活方式管理」</strong>建议，仅作参考，<strong>不作为医疗诊断</strong>，也不提供任何药物剂量指导。如主人患有疾病或身体不适，请务必先咨询专业医护人员，再开始运动计划。</p>
+      </div>
+    </section>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <script>
+    // ===== 导航辅助函数 =====
+    function navPush(route) {
+      console.log(`[原型演示] PUSH 到: ${route}`);
+      window.location.href = route;
+    }
+    function navReplace(route) {
+      console.log(`[原型演示] REPLACE 为: ${route}`);
+      window.location.replace(route);
+    }
+    function navReset(route) {
+      console.log(`[原型演示] RESET 到: ${route}`);
+      window.location.href = route;
+    }
+    function navBack() {
+      console.log(`[原型演示] BACK 返回上一页`);
+      if (window.history.length > 1) window.history.back();
+    }
+
+    $(function () {
+      // 返回上一页
+      $('#btn-back').on('click', function () { navBack(); });
+
+      // 目标切换：根据选中 chip 显示/隐藏对应推荐运动组
+      // 交互逻辑：
+      // 1. 点击目标 chip，切换其选中态（选中用 bg-primary + 白字，其余用 surface-container 灰字）
+      // 2. 根据 chip 的 data-group 显示对应的运动组容器，隐藏其余组
+      $('#goal-chips').on('click', '.goal-chip', function () {
+        const groupId = $(this).data('group');
+        $('#goal-chips .goal-chip').each(function () {
+          const active = $(this).data('group') === groupId;
+          $(this).toggleClass('bg-primary text-on-primary', active)
+                 .toggleClass('bg-surface-container text-on-surface-variant', !active);
+        });
+        $('.goal-group').addClass('hidden');
+        $('#' + groupId).removeClass('hidden');
+      });
+
+      // 跟做视频入口：应调用第三方视频播放（如前端打开对应运动跟练视频源）
+      $('.video-play').on('click', function () {
+        console.log('需要调用第三方接口播放跟做视频');
+      });
+
+      // 今日计划勾选：点击圆圈在完成/未完成间切换（用于演示打卡准备）
+      // 后续应联动打卡凭证提交：勾选完成的运动项在下单凭证时自动带出
+      $('#plan-list').on('click', '.plan-check', function () {
+        $(this).toggleClass('bg-primary border-primary text-on-primary')
+               .toggleClass('border-on-surface-variant/40 text-transparent');
+      });
+
+      // 运动时间选择：点击高亮选中项，供设置提醒使用
+      $('#time-options').on('click', '.time-opt', function () {
+        $('.time-opt').removeClass('bg-primary text-on-primary').addClass('bg-surface-container text-on-surface-variant');
+        $(this).addClass('bg-primary text-on-primary').removeClass('bg-surface-container text-on-surface-variant');
+        $('#remind-time').text($(this).data('time'));
+      });
+
+      // 设置提醒：
+      // 1. 首次点击：读取当前选中的时间（含时间戳），切换为已设置状态并显示提醒文案
+      // 2. 再次点击：可取消提醒，恢复初始文案
+      $('#btn-set-remind').on('click', function () {
+        const active = $('#remind-status').hasClass('hidden');
+        $('#remind-status').toggleClass('hidden', !active);
+        $(this).toggleClass('bg-surface-container text-on-surface bg-primary text-on-primary');
+      });
+
+      // 去打卡：跳转至目标详情页（可在该页上传运动视频/照片凭证完成打卡）
+      $('#btn-checkin').on('click', function () {
+        navPush('goal-detail.html');
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色：疗愈风 - 鼠尾草绿 + 奶油 + 土色 === */
+      --color-primary:              #8FA68E;
+      --color-primary-container:    #DEE5D9;
+      --color-on-primary:           #ffffff;
+      --color-secondary:            #B88466;
+      --color-secondary-container:  #EDDDD2;
+      --color-on-secondary:         #ffffff;
+      /* === 背景 / 表面（暖米色系，色阶克制） === */
+      --color-background:                 #F4EFE6;
+      --color-surface-container-lowest:   #FBF8F1;
+      --color-surface:                    #FFF9EF;
+      --color-surface-container:          #ECE5D9;
+      --color-surface-container-high:     #E5DDCF;
+      --color-surface-container-highest:  #DED5C6;
+      /* === 文字（暖棕） === */
+      --color-on-surface:           #2F2A24;
+      --color-on-surface-variant:   #7D746B;
+      /* === 功能色 === */
+      --color-success:  #6FA05C;
+      --color-error:    #C4554D;
+      --color-warning:  #D99A3D;
+      /* === 边框 === */
+      --color-outline:          #C9BFAD;
+      --color-outline-variant:  #D8D0C1;
+      /* === 圆角 === */
+      --radius-sm:   0.75rem;
+      --radius-md:   1rem;
+      --radius-lg:   1.25rem;
+      --radius-xl:   1.5rem;
+      --radius-2xl:  1.75rem;
+      --radius-full: 9999px;
+      /* === 阴影（暖调低透明） === */
+      --shadow-card:   0 4px 14px rgba(82,72,60,0.08);
+      --shadow-float:  0 12px 28px rgba(82,72,60,0.12);
+      --shadow-dialog: 0 25px 50px rgba(82,72,60,0.18);
+      /* === 字体 === */
+      --font-sans: "Nunito", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+      --font-display: "Noto Serif SC", serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- ===== 二级页 Header：带返回按钮 + ellipsis 菜单 ===== -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <button id="btn-back" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container active:bg-surface-container-high transition-colors" aria-label="返回">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </button>
+    <h1 class="font-display text-base font-semibold text-on-surface">目标详情</h1>
+    <button id="btn-menu" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container transition-colors" aria-label="更多">
+      <i data-lucide="ellipsis-vertical" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <main class="flex-1 overflow-y-auto pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
+    <!-- @main-content:start -->
+
+    <!-- ===== 目标概览卡 ===== -->
+    <section class="mx-4 mt-4">
+      <div class="bg-surface rounded-2xl shadow-card p-5">
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <span class="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-secondary-container text-secondary mb-2">健康减重</span>
+            <h2 class="font-display text-xl font-bold text-on-surface">轻盈 12 周 · 减重 5kg</h2>
+            <p class="text-sm text-on-surface-variant mt-1.5 flex items-center gap-1.5">
+              <i data-lucide="calendar-days" class="w-4 h-4"></i>2025-06-01 至 2025-08-24 · 共 12 周
+            </p>
+          </div>
+          <!-- 环形进度 -->
+          <div class="relative w-24 h-24 shrink-0">
+            <svg viewBox="0 0 96 96" class="w-full h-full -rotate-90">
+              <circle cx="48" cy="48" r="40" fill="none" stroke="#ECE5D9" stroke-width="10"/>
+              <circle cx="48" cy="48" r="40" fill="none" stroke="#8FA68E" stroke-width="10"
+                      stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="75.36"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span class="text-base font-bold text-primary">70%</span>
+              <span class="text-[10px] text-on-surface-variant">已达成</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 周期进度条 -->
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="text-on-surface-variant">周期进度</span>
+            <span class="font-semibold text-secondary">第 9 / 12 周</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+            <div class="h-full rounded-full bg-gradient-to-r from-primary to-secondary" style="width:75%"></div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div class="bg-surface-container rounded-xl py-3">
+            <p class="text-lg font-bold text-on-surface">3.5<span class="text-xs font-medium text-on-surface-variant"> kg</span></p>
+            <p class="text-[11px] text-on-surface-variant mt-0.5">已减重</p>
+          </div>
+          <div class="bg-surface-container rounded-xl py-3">
+            <p class="text-lg font-bold text-primary">1.5<span class="text-xs font-medium text-on-surface-variant"> kg</span></p>
+            <p class="text-[11px] text-on-surface-variant mt-0.5">待达成</p>
+          </div>
+          <div class="bg-surface-container rounded-xl py-3">
+            <p class="text-lg font-bold text-warning">28<span class="text-xs font-medium text-on-surface-variant"> 天</span></p>
+            <p class="text-[11px] text-on-surface-variant mt-0.5">剩余天数</p>
+          </div>
+        </div>
+
+        <p class="text-xs text-on-surface-variant mt-3.5 leading-relaxed">主人，已坚持 56 天 🌱 今天也要温柔地照顾好自己哦～再坚持 28 天就能和理想中的自己见面啦。</p>
+      </div>
+    </section>
+
+    <!-- ===== 每日打卡计划 ===== -->
+    <section class="mt-7">
+      <div class="flex items-center justify-between px-4">
+        <h3 class="font-display text-base font-semibold text-on-surface">今日打卡计划</h3>
+        <span class="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">已完成 2 / 4</span>
+      </div>
+
+      <div class="mt-3 flex flex-col gap-3 px-4">
+        <!-- 打卡项-晨起称重（已完成） -->
+        <div class="task-item bg-surface rounded-2xl shadow-card p-4" id="check-item-1">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-success/15 text-success flex items-center justify-center shrink-0">
+              <i data-lucide="scale" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-on-surface flex items-center gap-2">晨起称重
+                <span class="inline-flex items-center gap-0.5 text-[11px] text-success bg-success/10 px-1.5 py-0.5 rounded-full"><i data-lucide="check" class="w-3 h-3"></i>已完成</span>
+              </p>
+              <p class="text-xs text-on-surface-variant mt-1">早上 7:00 · 体重录入 52.4kg（较昨日 -0.3kg）</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 打卡项-健康午餐拍照（已完成） -->
+        <div class="task-item bg-surface rounded-2xl shadow-card p-4" id="check-item-2">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-success/15 text-success flex items-center justify-center shrink-0">
+              <i data-lucide="camera" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-on-surface flex items-center gap-2">健康午餐拍照
+                <span class="inline-flex items-center gap-0.5 text-[11px] text-success bg-success/10 px-1.5 py-0.5 rounded-full"><i data-lucide="check" class="w-3 h-3"></i>已完成</span>
+              </p>
+              <p class="text-xs text-on-surface-variant mt-1">中午 12:30 · 已上传午餐凭证</p>
+            </div>
+            <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd" alt="健康减脂午餐沙拉" data-category="食物" class="w-12 h-12 rounded-lg object-cover"/>
+          </div>
+        </div>
+
+        <!-- 打卡项-30分钟散步（待完成，可展开） -->
+        <div class="task-item bg-surface rounded-2xl shadow-card p-4" id="check-item-3">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <i data-lucide="footprints" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-on-surface flex items-center gap-2">30 分钟散步
+                <span class="inline-flex items-center gap-0.5 text-[11px] text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded-full"><i data-lucide="clock" class="w-3 h-3"></i>待完成</span>
+              </p>
+              <p class="text-xs text-on-surface-variant mt-1">傍晚 18:00 · 快走至少 30 分钟</p>
+            </div>
+          </div>
+          <button class="card-check-btn w-full mt-3 bg-primary text-on-primary py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-1.5">
+            <i data-lucide="camera" class="w-4 h-4"></i>去打卡
+          </button>
+        </div>
+
+        <!-- 打卡项-睡前冥想（待完成，可展开） -->
+        <div class="task-item bg-surface rounded-2xl shadow-card p-4" id="check-item-4">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <i data-lucide="moon-star" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-on-surface flex items-center gap-2">睡前冥想
+                <span class="inline-flex items-center gap-0.5 text-[11px] text-on-surface-variant bg-surface-container px-1.5 py-0.5 rounded-full"><i data-lucide="clock" class="w-3 h-3"></i>待完成</span>
+              </p>
+              <p class="text-xs text-on-surface-variant mt-1">晚上 22:00 · 轻柔呼吸冥想 10 分钟</p>
+            </div>
+          </div>
+          <button class="card-check-btn w-full mt-3 bg-primary text-on-primary py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-1.5">
+            <i data-lucide="camera" class="w-4 h-4"></i>去打卡
+          </button>
+        </div>
+
+        <!-- 明日预告 -->
+        <div class="flex items-center gap-2 px-1 text-xs text-on-surface-variant">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-secondary"></i>明日计划 · 晨起称重 + 力量训练 20 分钟 + 睡前冥想
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 好友监督团 ===== -->
+    <section class="mt-7">
+      <div class="px-4">
+        <h3 class="font-display text-base font-semibold text-on-surface">好友监督团</h3>
+        <p class="text-xs text-on-surface-variant mt-1">好友可以看到主人共同目标的所有完成情况，一起加油吧～</p>
+      </div>
+
+      <div class="mt-3 bg-surface rounded-2xl shadow-card mx-4 p-4">
+        <!-- 今日已打卡好友 -->
+        <div>
+          <p class="text-xs font-semibold text-on-surface-variant mb-2.5">今日已打卡
+            <span class="text-success font-bold">3</span> 位好友</p>
+          <div class="flex flex-col gap-3">
+            <!-- 监督好友1 -->
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-primary/15 rounded-full flex items-center justify-center">
+                <span class="text-xs font-bold text-primary">舒</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-on-surface">舒然</p>
+                <p class="text-xs text-on-surface-variant mt-0.5">已完成「晨起称重」「30 分钟散步」</p>
+              </div>
+              <span class="inline-flex items-center gap-0.5 text-[11px] text-success bg-success/10 px-2 py-1 rounded-full"><i data-lucide="check" class="w-3 h-3"></i>已打卡</span>
+            </div>
+            <!-- 监督好友2 -->
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-secondary/15 rounded-full flex items-center justify-center">
+                <span class="text-xs font-bold text-secondary">婷</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-on-surface">晓婷</p>
+                <p class="text-xs text-on-surface-variant mt-0.5">已完成「健康午餐拍照」</p>
+              </div>
+              <span class="inline-flex items-center gap-0.5 text-[11px] text-success bg-success/10 px-2 py-1 rounded-full"><i data-lucide="check" class="w-3 h-3"></i>已打卡</span>
+            </div>
+            <!-- 监督好友3 -->
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-primary/15 rounded-full flex items-center justify-center">
+                <span class="text-xs font-bold text-primary">琳</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-on-surface">阿琳</p>
+                <p class="text-xs text-on-surface-variant mt-0.5">已完成「睡前冥想」</p>
+              </div>
+              <span class="inline-flex items-center gap-0.5 text-[11px] text-success bg-success/10 px-2 py-1 rounded-full"><i data-lucide="check" class="w-3 h-3"></i>已打卡</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 监督人数 footer -->
+        <button id="btn-friends" class="mt-4 w-full flex items-center justify-between bg-surface-container rounded-xl px-4 py-3 hover:bg-surface-container-high transition-colors">
+          <div class="flex items-center gap-2">
+            <div class="flex -space-x-2">
+              <div class="w-6 h-6 rounded-full bg-primary/20 border-2 border-surface flex items-center justify-center"><span class="text-[9px] font-bold text-primary">舒</span></div>
+              <div class="w-6 h-6 rounded-full bg-secondary/20 border-2 border-surface flex items-center justify-center"><span class="text-[9px] font-bold text-secondary">婷</span></div>
+              <div class="w-6 h-6 rounded-full bg-primary/20 border-2 border-surface flex items-center justify-center"><span class="text-[9px] font-bold text-primary">琳</span></div>
+              <div class="w-6 h-6 rounded-full bg-surface-container-high border-2 border-surface flex items-center justify-center"><span class="text-[9px] font-bold text-on-surface-variant">+2</span></div>
+            </div>
+            <span class="text-sm text-on-surface-variant">共 5 位好友监督中</span>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/60"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== 打卡记录时间线 ===== -->
+    <section class="mt-7">
+      <div class="px-4">
+        <h3 class="font-display text-base font-semibold text-on-surface">打卡记录</h3>
+      </div>
+
+      <div class="mt-3 flex flex-col gap-3 px-4">
+        <!-- 记录1 -->
+        <div class="record-item bg-surface rounded-2xl shadow-card p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-success/15 text-success flex items-center justify-center shrink-0">
+              <i data-lucide="check-check" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-on-surface">2025-07-27 · 4 项全完成</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">晨起称重 · 健康午餐 · 散步 · 冥想</p>
+            </div>
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded-full"><i data-lucide="star" class="w-3.5 h-3.5"></i>+20 积分</span>
+          </div>
+          <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061" alt="健康均衡的减脂餐食照片" data-category="食物" class="w-full h-36 object-cover rounded-xl mt-3"/>
+        </div>
+
+        <!-- 记录2 -->
+        <div class="record-item bg-surface rounded-2xl shadow-card p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-on-surface">2025-07-26 · 完成 3 项</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">晨起称重 · 散步 · 冥想</p>
+            </div>
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full"><i data-lucide="star" class="w-3.5 h-3.5"></i>+15 积分</span>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <img src="https://images.unsplash.com/photo-1546483875-ad9014c88eba" alt="绿意公园散步小路" data-category="自然风景" class="w-24 h-20 rounded-xl object-cover"/>
+            <img src="https://images.unsplash.com/photo-1545205597-3d9d02c29597" alt="安静放松的冥想室环境" data-category="艺术" class="w-24 h-20 rounded-xl object-cover"/>
+          </div>
+        </div>
+
+        <!-- 记录3 -->
+        <div class="record-item bg-surface rounded-2xl shadow-card p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <i data-lucide="check" class="w-5 h-5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-on-surface">2025-07-25 · 完成 2 项</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">健康午餐 · 30 分钟散步</p>
+            </div>
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-full"><i data-lucide="star" class="w-3.5 h-3.5"></i>+10 积分</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 查看全部 -->
+      <div class="px-4 mt-3">
+        <button id="btn-more-records" class="w-full bg-surface-container text-on-surface-variant py-3 rounded-xl text-sm font-semibold hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center justify-center gap-1.5">
+          <i data-lucide="history" class="w-4 h-4"></i>查看全部打卡记录
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== 留言评论区 ===== -->
+    <section class="mt-7">
+      <div class="px-4">
+        <h3 class="font-display text-base font-semibold text-on-surface">留言区</h3>
+        <p class="text-xs text-on-surface-variant mt-1">互相鼓励，监督彼此的路上不孤单～</p>
+      </div>
+
+      <div class="mt-3 bg-surface rounded-2xl shadow-card mx-4 p-4">
+        <!-- 留言列表 -->
+        <div id="comment-list" class="flex flex-col gap-4">
+          <!-- 留言1 -->
+          <div class="comment-item flex gap-3">
+            <div class="w-9 h-9 bg-primary/15 rounded-full flex items-center justify-center shrink-0">
+              <span class="text-xs font-bold text-primary">舒</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-medium text-on-surface">舒然</span>
+                <span class="text-[10px] text-on-surface-variant">昨天 21:04</span>
+              </div>
+              <p class="text-sm text-on-surface mt-1 leading-relaxed">主人今天午睡散步的照片真棒！明天一起去湖边快走呀 🌿</p>
+            </div>
+          </div>
+          <!-- 留言2（含图片） -->
+          <div class="comment-item flex gap-3">
+            <div class="w-9 h-9 bg-secondary/15 rounded-full flex items-center justify-center shrink-0">
+              <span class="text-xs font-bold text-secondary">小</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-medium text-on-surface">小初</span>
+                <span class="text-[10px] text-on-surface-variant">昨天 21:30</span>
+              </div>
+              <p class="text-sm text-on-surface mt-1 leading-relaxed">好的呀，明早一起 6:30 湖边见，不见不散～</p>
+              <img src="https://images.unsplash.com/photo-1546483875-ad9014c88eba" alt="晨光中的湖边绿荫小径" data-category="自然风景" class="w-36 h-24 rounded-xl object-cover mt-2"/>
+            </div>
+          </div>
+          <!-- 留言3 -->
+          <div class="comment-item flex gap-3">
+            <div class="w-9 h-9 bg-primary/15 rounded-full flex items-center justify-center shrink-0">
+              <span class="text-xs font-bold text-primary">琳</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline gap-2">
+                <span class="text-sm font-medium text-on-surface">阿琳</span>
+                <span class="text-[10px] text-on-surface-variant">今天 08:12</span>
+              </div>
+              <p class="text-sm text-on-surface mt-1 leading-relaxed">主人坚持好久啦，进度 70% 好厉害！给你点赞 👍</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 留言输入区 -->
+        <div class="mt-4 flex items-center gap-2.5">
+          <div class="w-9 h-9 bg-surface-container-high rounded-full flex items-center justify-center shrink-0">
+            <span class="text-xs font-bold text-on-surface">初</span>
+          </div>
+          <input id="comment-input" type="text" placeholder="给监督的小伙伴留言…"
+                 class="flex-1 bg-surface-container border-none rounded-full px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+          <button id="btn-send-comment" class="w-10 h-10 shrink-0 rounded-full bg-primary text-on-primary flex items-center justify-center hover:opacity-90 active:scale-95 transition-all" aria-label="发送留言">
+            <i data-lucide="send" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <!-- ===== 底部悬浮：今日打卡 主按钮 ===== -->
+  <div class="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-background via-background/95 to-transparent px-4 pt-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+    <button id="btn-checkin-now" class="w-full bg-primary text-on-primary py-4 rounded-2xl text-base font-semibold shadow-float
+               hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+      <i data-lucide="check-circle" class="w-5 h-5"></i>今日打卡（剩 2 项）
+    </button>
+  </div>
+
+  <!-- ===== ellipsis 菜单弹层 ===== -->
+  <div id="menu-overlay" class="hidden fixed inset-0 bg-black/40 z-50" aria-hidden="true"></div>
+  <div id="menu-sheet" class="hidden fixed inset-0 z-50 flex items-end">
+    <div class="w-full bg-surface rounded-t-2xl p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-dialog">
+      <div class="w-10 h-1 bg-outline-variant rounded-full mx-auto mb-4"></div>
+      <button id="menu-pause" class="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-surface-container rounded-xl transition-colors">
+        <i data-lucide="pause" class="w-5 h-5 text-warning"></i>
+        <span class="text-base font-medium text-on-surface">暂停目标</span>
+      </button>
+      <button id="menu-reset" class="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-surface-container rounded-xl transition-colors">
+        <i data-lucide="rotate-ccw" class="w-5 h-5 text-secondary"></i>
+        <span class="text-base font-medium text-on-surface">重设目标</span>
+      </button>
+      <button id="menu-cancel" class="w-full flex items-center gap-3 px-4 py-4 text-left hover:bg-surface-container rounded-xl transition-colors">
+        <i data-lucide="x" class="w-5 h-5 text-on-surface-variant"></i>
+        <span class="text-base font-medium text-on-surface-variant">取消</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== 打卡凭证上传弹层 ===== -->
+  <div id="upload-overlay" class="hidden fixed inset-0 bg-black/40 z-50" aria-hidden="true"></div>
+  <div id="upload-sheet" class="hidden fixed inset-0 z-50 flex items-end">
+    <div class="w-full bg-surface rounded-t-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-dialog max-h-[85vh] overflow-y-auto">
+      <div class="w-10 h-1 bg-outline-variant rounded-full mx-auto mb-4"></div>
+      <h3 class="font-display text-lg font-bold text-on-surface">打卡凭证</h3>
+      <p class="text-sm text-on-surface-variant mt-1" id="upload-item-name">正在打卡：30 分钟散步</p>
+
+      <!-- 上传方式 -->
+      <div class="mt-4 grid grid-cols-3 gap-3">
+        <button id="upload-camera" class="flex flex-col items-center gap-2 bg-surface-container rounded-xl py-5 hover:bg-surface-container-high transition-colors">
+          <i data-lucide="camera" class="w-5 h-5 text-primary"></i>
+          <span class="text-xs text-on-surface">拍照</span>
+        </button>
+        <button id="upload-image" class="flex flex-col items-center gap-2 bg-surface-container rounded-xl py-5 hover:bg-surface-container-high transition-colors">
+          <i data-lucide="image" class="w-5 h-5 text-primary"></i>
+          <span class="text-xs text-on-surface">图片</span>
+        </button>
+        <button id="upload-video" class="flex flex-col items-center gap-2 bg-surface-container rounded-xl py-5 hover:bg-surface-container-high transition-colors">
+          <i data-lucide="video" class="w-5 h-5 text-primary"></i>
+          <span class="text-xs text-on-surface">视频</span>
+        </button>
+      </div>
+
+      <!-- 凭证预览（上传后展示） -->
+      <div id="preview-zone" class="hidden mt-4">
+        <div class="flex items-center gap-3 bg-surface-container rounded-xl p-3">
+          <img id="preview-thumb" src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8" alt="用户上传的散步记录照片" data-category="自然风景" class="w-16 h-16 rounded-lg object-cover"/>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-on-surface">凭证已上传</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">点击缩略图可重新选择</p>
+          </div>
+          <span class="inline-flex items-center gap-1 text-[11px] text-success bg-success/10 px-2 py-1 rounded-full"><i data-lucide="check" class="w-3 h-3"></i>可确认</span>
+        </div>
+      </div>
+
+      <!-- 确认打卡 -->
+      <button id="btn-confirm-checkin" class="mt-5 w-full bg-primary text-on-primary py-3.5 rounded-xl text-base font-semibold hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+        <i data-lucide="badge-check" class="w-5 h-5"></i>确认完成打卡
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== 打卡成功提示 ===== -->
+  <div id="success-toast" class="hidden fixed left-1/2 top-16 -translate-x-1/2 z-[60] bg-surface rounded-xl shadow-float px-4 py-3 flex items-center gap-2.5 whitespace-nowrap">
+    <i data-lucide="party-popper" class="w-5 h-5 text-primary"></i>
+    <div>
+      <p class="text-sm font-semibold text-on-surface" id="toast-title">打卡成功！</p>
+      <p class="text-xs text-on-surface-variant mt-0.5" id="toast-sub">积分 +5，继续加油吧～</p>
+    </div>
+  </div>
+
+  <script>
+    /* ===== 导航辅助函数 ===== */
+    function navPush(route) { console.log('[原型演示] PUSH 到: ' + route); window.location.href = route; }
+    function navReplace(route) { console.log('[原型演示] REPLACE 为: ' + route); window.location.replace(route); }
+    function navReset(route) { console.log('[原型演示] RESET 到: ' + route); window.location.href = route; }
+    function navBack() { console.log('[原型演示] BACK 返回上一页'); if (window.history.length > 1) window.history.back(); }
+
+    $(function () {
+      /* 返回 */
+      $('#btn-back').on('click', navBack);
+
+      /* ellipsis 菜单 */
+      $('#btn-menu').on('click', function () { $('#menu-overlay').removeClass('hidden'); $('#menu-sheet').removeClass('hidden'); });
+      $('#menu-cancel').on('click', function () { $('#menu-overlay').addClass('hidden'); $('#menu-sheet').addClass('hidden'); });
+      $('#menu-overlay').on('click', function () { $('#menu-overlay').addClass('hidden'); $('#menu-sheet').addClass('hidden'); });
+      // 暂停目标 - 点击后应弹出确认弹窗，确认后目标切换为暂停态，
+      // 今日待完成打卡项转为暂停标记，底部按钮文字变为「目标已暂停」并置灰。
+      $('#menu-pause').on('click', function () {
+        console.log('暂停目标：弹出确认后切换目标状态为暂停中');
+        $('#menu-overlay').addClass('hidden'); $('#menu-sheet').addClass('hidden');
+      });
+      // 重设目标 - 点击后应跳转到目标设置流程页 goal-setup.html 重新设定目标参数。
+      $('#menu-reset').on('click', function () {
+        console.log('重设目标：跳转目标设置页');
+        navPush('goal-setup.html');
+      });
+
+      /* 去打卡：绑定事件入口，展开上传凭证弹层 */
+      $('.card-check-btn').on('click', function () {
+        const itemName = $(this).closest('.task-item').find('p.text-sm.font-semibold').text().trim();
+        $('#upload-item-name').text('正在打卡：' + itemName);
+        // 每次打开时还原为未上传状态
+        $('#preview-zone').addClass('hidden');
+        $('#upload-overlay').removeClass('hidden');
+        $('#upload-sheet').removeClass('hidden');
+      });
+
+      // 关闭上传弹层
+      $('#upload-overlay').on('click', function () {
+        $('#upload-overlay').addClass('hidden'); $('#upload-sheet').addClass('hidden');
+      });
+
+      /* 打卡凭证上传按钮 - 第三方接口，仅保留入口 */
+      // 拍照：调用系统相机拍照并读取照片作为凭证
+      // 图片：打开系统相册选择图片作为凭证
+      // 视频：录制/选择 10 秒内短视频作为凭证
+      // 三者统一：获取到媒体文件后展示在 #preview-thumb 中，并显示「凭证已上传·可确认」。
+      $('#upload-camera').on('click', function () {
+        console.log('需要调用第三方接口实现相机拍照功能');
+        $('#preview-zone').removeClass('hidden');
+        $('#preview-thumb').attr('src', 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8');
+      });
+      $('#upload-image').on('click', function () {
+        console.log('需要调用第三方接口实现相册选图功能');
+        $('#preview-zone').removeClass('hidden');
+        $('#preview-thumb').attr('src', 'https://images.unsplash.com/photo-1490645935967-10de6ba17061');
+      });
+      $('#upload-video').on('click', function () {
+        console.log('需要调用第三方接口实现视频选择功能');
+        $('#preview-zone').removeClass('hidden');
+        $('#preview-thumb').attr('src', 'https://images.unsplash.com/photo-1545205597-3d9d02c29597');
+      });
+
+      /* 确认完成打卡 */
+      // 完整交互行为：
+      // 1. 校验凭证是否已上传，未上传时 toast 提示「请先上传打卡凭证」
+      // 2. 关闭上传弹层，将该打卡项标记为已完成（状态徽标变绿勾、隐藏「去打卡」按钮）
+      // 3. 顶部进度计数「已完成 x / 4」+1，落地到今日打卡记录时间线并计入积分
+      // 4. 弹出「打卡成功 + 积分」toast
+      $('#btn-confirm-checkin').on('click', function () {
+        if ($('#preview-zone').hasClass('hidden')) {
+          console.log('请先上传打卡凭证后再确认');
+          return;
+        }
+        $('#upload-overlay').addClass('hidden'); $('#upload-sheet').addClass('hidden');
+        $('#success-toast').removeClass('hidden');
+        setTimeout(function () { $('#success-toast').addClass('hidden'); }, 2400);
+        console.log('打卡成功，已计入今日进度与打卡记录');
+      });
+
+      /* 今日打卡主按钮 - 展开上传凭证，提示今日待完成项 */
+      $('#btn-checkin-now').on('click', function () {
+        $('#upload-item-name').text('正在打卡：30 分钟散步');
+        $('#preview-zone').addClass('hidden');
+        $('#upload-overlay').removeClass('hidden');
+        $('#upload-sheet').removeClass('hidden');
+      });
+
+      /* 留言发送 */
+      // 完整交互行为：
+      // 1. 读取 #comment-input 文本，trim 后若为空则不发送
+      // 2. 将留言以「小初」的身份插入评论区列表顶部（或底部）
+      // 3. 清空输入框
+      $('#btn-send-comment').on('click', function () {
+        const text = $('#comment-input').val().trim();
+        if (!text) return;
+        $('#comment-input').val('');
+        console.log('发送留言：' + text);
+      });
+
+      /* 好友监督团 - 查看好友列表 */
+      $('#btn-friends').on('click', function () {
+        console.log('跳转好友监督管理列表');
+        navPush('friends.html');
+      });
+
+      /* 查看全部打卡记录 */
+      $('#btn-more-records').on('click', function () {
+        console.log('加载更多打卡记录或跳转记录列表页');
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

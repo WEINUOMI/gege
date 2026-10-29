@@ -1,0 +1,84 @@
+{
+  "elements": [
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/home.html"
+      },
+      "title": "暖心对话(首页)",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/onboarding.html"
+      },
+      "title": "初次健康档案抽取",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/profile.html"
+      },
+      "title": "健康管理(我的)",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/goal-setup.html"
+      },
+      "title": "目标设置",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/goal-detail.html"
+      },
+      "title": "目标详情与打卡",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/body-records.html"
+      },
+      "title": "身体状况记录",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/rewards.html"
+      },
+      "title": "奖惩积分",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/friends.html"
+      },
+      "title": "好友监督",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/diet.html"
+      },
+      "title": "饮食营养推荐",
+      "size": "mobile"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/mobile/exercise.html"
+      },
+      "title": "运动计划推荐",
+      "size": "mobile"
+    }
+  ]
+}
