@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Platform } from 'react-native';
+import { reportError } from '@/utils/diag';
 
 interface Props { children: React.ReactNode; }
 interface State { error: Error | null; }
@@ -16,7 +17,17 @@ export class AppBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error) {
     console.error('[AppBoundary]', error);
+    reportError('boundary', error.message, (error.stack || '') as string);
   }
+
+  handleRetry = () => {
+    reportError('boundary-retry', 'user tapped reload');
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.location.reload();
+      return;
+    }
+    this.setState({ error: null });
+  };
 
   render() {
     if (this.state.error) {
@@ -27,7 +38,7 @@ export class AppBoundary extends React.Component<Props, State> {
             暖暖正在努力修复，请点下面重试，或回到首页继续暖暖的陪伴
           </Text>
           <Pressable
-            onPress={() => this.setState({ error: null })}
+            onPress={this.handleRetry}
             style={{ marginTop: 24, backgroundColor: '#8FA68E', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 999 }}
           >
             <Text style={{ color: '#fff', fontWeight: '700' }}>刷新重试</Text>

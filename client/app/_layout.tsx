@@ -5,8 +5,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { Provider } from '@/components/Provider';
 import { AppBoundary } from '@/components/AppBoundary';
+import { mountGlobalErrorReporters } from '@/utils/diag';
 
 import '../global.css';
+
+// 仅 Web：挂载全局错误捕获，便于在后台查看前端闪退根因
+mountGlobalErrorReporters();
 
 LogBox.ignoreLogs([
   "TurboModuleRegistry.getEnforcing(...): 'RNMapsAirModule' could not be found",
