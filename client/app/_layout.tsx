@@ -1,8 +1,10 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LogBox } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { Provider } from '@/components/Provider';
+import { AppBoundary } from '@/components/AppBoundary';
 
 import '../global.css';
 
@@ -12,8 +14,10 @@ LogBox.ignoreLogs([
 
 export default function RootLayout() {
   return (
-    <Provider>
-      <Stack
+    <SafeAreaProvider>
+      <AppBoundary>
+        <Provider>
+          <Stack
         screenOptions={{
           animation: 'slide_from_right',
           gestureEnabled: true,
@@ -31,9 +35,11 @@ export default function RootLayout() {
         <Stack.Screen name="friends" options={{ title: "" }} />
         <Stack.Screen name="diet" options={{ title: "" }} />
         <Stack.Screen name="exercise" options={{ title: "" }} />
-      </Stack>
-      <StatusBar style="dark" />
-      <Toast />
-    </Provider>
+        </Stack>
+        <StatusBar style="dark" />
+        <Toast />
+        </Provider>
+      </AppBoundary>
+    </SafeAreaProvider>
   );
 }

@@ -40,8 +40,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: '暖心对话',
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={(focused ? 'home-heart' : 'home-heart-outline') as any} size={24} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="heart-pulse" size={24} color={color} />
           ),
         }}
       />
@@ -49,8 +49,8 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: '健康管理',
-          tabBarIcon: ({ color, focused }) => (
-            <MaterialCommunityIcons name={(focused ? 'shield-heart' : 'shield-heart-outline') as any} size={24} color={color} />
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="clipboard-check-outline" size={24} color={color} />
           ),
         }}
       />
