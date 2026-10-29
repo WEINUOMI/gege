@@ -1,6 +1,13 @@
+import { Platform } from 'react-native';
 import { createFormDataFile } from '@/utils';
 
-export const API = (process.env.EXPO_PUBLIC_BACKEND_BASE_URL || '').replace(/\/$/, '');
+/**
+ * Web 端（预览/线上）页面由平台从页面源站承载，且该源站已反向代理 `/api/v1/*` 到后端，
+ * 因此 Web 端应同源请求（相对路径），避免跨域/域名在浏览器预览不可达导致 NetworkError。
+ * 原生端（Android/iOS）无同源代理，使用系统注入的绝对后端地址。
+ */
+const injectedBase = (process.env.EXPO_PUBLIC_BACKEND_BASE_URL || '').replace(/\/$/, '');
+export const API = Platform.OS === 'web' ? '' : injectedBase;
 
 export async function apiGet<T = any>(path: string): Promise<T> {
   const res = await fetch(`${API}${path}`);
