@@ -7,8 +7,19 @@ const client = getSupabaseClient();
 function genInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let s = "";
-  for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 6; i++) s += chars[Math.floor(Math.random() * chars.length)];
   return `NKN-${s}`;
+}
+
+// 生成唯一的邀请标识（冲突时重试）
+async function uniqueInviteCode(client: any): Promise<string> {
+  for (let i = 0; i < 8; i++) {
+    const code = genInviteCode();
+    const { data } = await client.from("users").select("id").eq("invite_code", code).maybeSingle();
+    if (!data) return code;
+  }
+  // 极端情况兜底：加时间戳尾号
+  return `NKN-TOK${Date.now().toString(36).toUpperCase().slice(-5)}`;
 }
 
 // 引导：按 deviceId 获取或创建"主人"用户
@@ -23,7 +34,7 @@ router.post("/me/bootstrap", async (req, res) => {
     if (!data) {
       const { data: created } = await client
         .from("users")
-        .insert({ device_id: deviceId, nickname: nickname || "主人", invite_code: genInviteCode(), avatar_text: "初" })
+        .insert({ device_id: deviceId, nickname: nickname || "主人", invite_code: await uniqueInviteCode(client), avatar_text: "初" })
         .select()
         .single();
       data = created;

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Image, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Image, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +42,7 @@ export default function GoalDetailScreen() {
 
   const pickProof = async (item: Item) => {
     setCurrent(item); setCkOpen(false);
+    if (Platform.OS === 'web') return pickAny(item);
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { Alert.alert('暖暖提醒', '需要相册权限才能上传打卡凭证哦'); return; }
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.7 });
@@ -51,11 +52,24 @@ export default function GoalDetailScreen() {
 
   const takePhoto = async (item: Item) => {
     setCurrent(item); setCkOpen(false);
+    if (Platform.OS === 'web') return pickAny(item);
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) { Alert.alert('暖暖提醒', '需要相机权限才能拍摄打卡凭证哦'); return; }
     const res = await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 0.7 });
     if (res.canceled) return;
     await doCheckin(item, res.assets[0].uri);
+  };
+
+  // Web 端：相机权限不可用、launchCameraAsync 会卡死无法退出，统一回退到相册选择（可取消退出）
+  const pickAny = async (item: Item) => {
+    setCurrent(item); setCkOpen(false);
+    try {
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.7 });
+      if (res.canceled) return;
+      await doCheckin(item, res.assets[0].uri);
+    } catch {
+      Alert.alert('暖暖提醒', '未能打开选择器，请重试');
+    }
   };
 
   const doCheckin = async (item: Item, uri: string) => {
