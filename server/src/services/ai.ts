@@ -28,7 +28,13 @@ function makeClient(req: Request) {
   };
 }
 
-const CHAT_SYSTEM = `你是"暖暖"，一款健康陪伴类应用"暖暖·陪跑"的暖心AI助手。请以亲近温馨的口吻称呼用户为"主人"。你的角色定位是"健康生活方式管理"，不做疾病诊断、不提供药物剂量建议。回答简洁友好、温暖治愈，可用少量emoji点缀。当涉及饮食/运动建议时，说明依据来源并附免责提示。`;
+const CHAT_SYSTEM = `你是"暖暖"，一款健康陪伴类应用"暖暖·陪跑"的暖心AI助手。请以亲近温馨的口吻称呼用户为"主人"。你的角色定位是"健康生活方式管理"，不做疾病诊断、不提供药物剂量建议。回答简洁友好、温暖治愈，可用少量emoji点缀。当涉及饮食/运动建议时，说明依据来源并附免责提示。
+
+【排版要求】回答会显示在手机聊天气泡里，请遵守：
+1. 默认用 2-4 句自然口语回复，不要长篇大论；
+2. 不要使用 Markdown 表格、不要用 # 大标题、不要画分隔线；
+3. 需要分点时最多 3-5 条，用"- "开头，每条一行、不换行内嵌套；
+4. 需要强调时用少量加粗即可，不要整段加粗。`;
 
 const DIET_SYSTEM = `你是营养健康助手"暖暖"。基于用户身体状况、当前目标，以及知识库检索到的《中国居民膳食指南2022》《食物成分表（第6版）》内容，给出科学、温和的饮食与菜谱建议。以"主人"称呼用户。必须：1) 明确标注推荐依据的知识库来源；2) 附上固定免责声明（定位为健康生活方式管理，不做诊断、不给药物剂量）；3) 推荐要个体化，考虑体检指标与病史。输出结构清晰。`;
 
@@ -61,6 +67,21 @@ function ctxText(ctx: HealthContext): string {
   if (ctx.medicalHistory?.length) parts.push(`过往病史：${ctx.medicalHistory.join("、")}`);
   if (ctx.goals?.length) parts.push(`当前目标：${ctx.goals.join("、")}`);
   return parts.length ? `【用户身体状况与目标】\n${parts.map((p) => `- ${p}`).join("\n")}\n` : "";
+}
+
+const MODEL = "doubao-seed-2-0-pro-260215";
+
+/** 通用文本调用：供学习计划等需要模型做个性化微调的场景使用 */
+export async function llmText(req: Request, system: string, user: string, temperature = 0.6): Promise<string> {
+  const { llm } = makeClient(req);
+  const res = await llm.invoke(
+    [
+      { role: "system" as const, content: system },
+      { role: "user" as const, content: user },
+    ],
+    { model: MODEL, temperature }
+  );
+  return res.content || "";
 }
 
 export async function chatReply(req: Request, history: { role: string; content: string }[], ctx: HealthContext): Promise<string> {

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getSupabaseClient } from "../storage/database/supabase-client";
 import { fileUrl } from "../services/storage";
+import { todayRange, localToday } from "../utils/date";
 
 const router = Router();
 const client = getSupabaseClient();
@@ -99,16 +100,16 @@ router.get("/:userId/goals/:goalId/supervision", async (req, res) => {
     const { data: members } = await client.from("goal_members").select("user_id").eq("goal_id", goalId);
     const memberIds = [...new Set([...(members || []).map((m: any) => m.user_id), userId])];
     const { data: memberUsers } = await client.from("users").select("id,nickname,avatar_text,invite_code").in("id", memberIds);
-    const today = new Date().toISOString().slice(0, 10);
+    const { start: dayStart, end: dayEnd } = todayRange();
     const details = await Promise.all(
       (memberUsers || []).map(async (u: any) => {
         const { data: mine } = await client
           .from("checkins")
-          .select("*, users:user_id(nickname,avatar_text)")
+          .select("*")
           .eq("goal_id", goalId)
           .eq("user_id", u.id)
-          .gte("checkin_date", `${today}T00:00:00`)
-          .lte("checkin_date", `${today}T23:59:59`);
+          .gte("checkin_date", dayStart)
+          .lte("checkin_date", dayEnd);
         const { data: week } = await client
           .from("checkins")
           .select("id")
@@ -119,6 +120,69 @@ router.get("/:userId/goals/:goalId/supervision", async (req, res) => {
       })
     );
     return res.json({ goal, members: details });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// 监督看板：我 + 每位好友的今日/本周完成情况、连续天数、最近一次打卡
+// 接口：GET /api/v1/friends/:userId/board
+router.get("/:userId/board", async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const { data: fs } = await client.from("friendships").select("friend_user_id").eq("user_id", userId).eq("status", "active");
+    const friendIds = (fs || []).map((f: any) => String(f.friend_user_id));
+    const allIds = [String(userId), ...friendIds];
+    const { data: users } = await client.from("users").select("id,nickname,avatar_text,invite_code").in("id", allIds);
+    const userMap: Record<string, any> = {};
+    (users || []).forEach((u: any) => { userMap[String(u.id)] = u; });
+
+    const today = localToday();
+    const weekStart = new Date(Date.now() - 6 * 86400000);
+
+    const board: any[] = [];
+    for (const uid of allIds) {
+      const { data: rows } = await client
+        .from("checkins")
+        .select("id,goal_id,title,proof_key,checkin_date,points")
+        .eq("user_id", uid)
+        .gte("checkin_date", weekStart.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(80);
+      const list = rows || [];
+      const dateSet = new Set(list.map((r: any) => localToday(new Date(r.checkin_date))));
+      let streak = 0;
+      const cursor = new Date();
+      // 今天没打卡则从昨天开始算连续，避免"早上还没打卡就显示 0 天"
+      if (!dateSet.has(today)) cursor.setTime(cursor.getTime() - 86400000);
+      for (let i = 0; i < 60; i += 1) {
+        const d = localToday(cursor);
+        if (dateSet.has(d)) { streak += 1; cursor.setTime(cursor.getTime() - 86400000); } else break;
+      }
+      const todayCount = list.filter((r: any) => localToday(new Date(r.checkin_date)) === today).length;
+      const last = list[0];
+      const lastUrl = last?.proof_key ? await fileUrl(last.proof_key) : "";
+
+      const { data: goals } = await client.from("goals").select("id,title,category").eq("user_id", uid).eq("status", "active").order("created_at", { ascending: false }).limit(4);
+      const { data: pts } = await client.from("points").select("amount").eq("user_id", uid).limit(500);
+      const totalPoints = (pts || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+
+      board.push({
+        user: userMap[uid] || { id: uid, nickname: "家人", avatar_text: "家" },
+        isMe: uid === String(userId),
+        todayCount,
+        weekCount: list.length,
+        streak,
+        totalPoints,
+        goals: goals || [],
+        last: last
+          ? { id: last.id, title: last.title, goalId: last.goal_id, at: last.checkin_date, proof_url: lastUrl, points: last.points }
+          : null,
+      });
+    }
+    // 自己排在最前，其余按本周完成次数降序
+    board.sort((a, b) => (a.isMe === b.isMe ? b.weekCount - a.weekCount : a.isMe ? -1 : 1));
+    return res.json({ board, today, friendCount: friendIds.length });
   } catch (e: any) {
     return res.status(500).json({ error: e.message });
   }

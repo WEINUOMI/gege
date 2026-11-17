@@ -194,3 +194,16 @@ export const chatMessages = pgTable(
   },
   (table) => [index("chat_user_idx").on(table.user_id)]
 );
+// ========== 客户端诊断日志（前端运行错误上报，辅助排查用） ==========
+export const diagLogs = pgTable(
+  "diag_logs",
+  {
+    id: serial("id").primaryKey(),
+    type: varchar("type", { length: 32 }).notNull().default("error"),
+    message: varchar("message", { length: 500 }),
+    detail: text("detail"),
+    url: varchar("url", { length: 500 }),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("diag_type_idx").on(table.type)]
+);

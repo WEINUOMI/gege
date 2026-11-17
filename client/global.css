@@ -35,6 +35,14 @@
   --color-surface-container-highest:  #DED5C6;
   --color-on-surface:           #2F2A24;
   --color-on-surface-variant:   #7D746B;
+
+  /* 文字色（自定义 token）
+     说明：uniwind 对 on-surface 的解析在本项目里会把文字渲染成表面色 #ECE5D9，
+     导致暖色背景下文字几乎不可见。改用独立的 ink 系列，避免与主题语义名冲突。 */
+  --color-ink:             #2F2A24;
+  --color-ink-soft:        #4E463C;
+  --color-ink-mute:        #6B6259;
+  --color-ink-faint:       #8A8076;
   --color-success:  #6FA05C;
   --color-error:    #C4554D;
   --color-warning:  #D99A3D;

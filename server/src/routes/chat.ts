@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getSupabaseClient } from "../storage/database/supabase-client";
 import { chatReply, type HealthContext } from "../services/ai";
 import { LLMClient, Config, HeaderUtils, type Message } from "coze-coding-dev-sdk";
+import { todayRange } from "../utils/date";
 
 const router = Router();
 const client = getSupabaseClient();
@@ -57,7 +58,7 @@ router.get("/:userId/today-reminders", async (req, res) => {
   try {
     const userId = req.params.userId;
     const { data: goals } = await client.from("goals").select("id,title").eq("user_id", userId).eq("status", "active");
-    const today = new Date().toISOString().slice(0, 10);
+    const { start: dayStart, end: dayEnd } = todayRange();
     let reminders: any[] = [];
     for (const g of goals || []) {
       const { data: items } = await client.from("plan_items").select("*").eq("goal_id", g.id).order("planned_time");
@@ -67,8 +68,8 @@ router.get("/:userId/today-reminders", async (req, res) => {
             .from("checkins")
             .select("plan_item_id")
             .eq("goal_id", g.id)
-            .gte("checkin_date", `${today}T00:00:00`)
-            .lte("checkin_date", `${today}T23:59:59`)
+            .gte("checkin_date", dayStart)
+            .lte("checkin_date", dayEnd)
         : { data: [] };
       const doneSet = new Set((done || []).map((c: any) => c.plan_item_id));
       for (const it of items || []) {

@@ -311,6 +311,8 @@ const styles = StyleSheet.create({
     flex: 1,
     // 确保内部容器透明，避免背景色遮挡
     backgroundColor: 'transparent',
+    // Web 端兜底：主题 token 失效时文字仍继承深色，避免暖色背景上出现浅灰字
+    color: '#2F2A24',
   },
 });
 

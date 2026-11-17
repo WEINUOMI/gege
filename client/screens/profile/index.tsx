@@ -33,9 +33,10 @@ export default function ProfileScreen() {
 
   const entries = [
     { icon: 'heart-pulse', label: '身体状况记录', desc: profile ? '已完善 · 点击查看' : '补充健康档案', color: '#B88466', onPress: () => router.push('/body-records') },
-    { icon: 'trophy-outline', label: '奖惩积分', desc: `当前 ${points} 分`, color: '#D99A3D', onPress: () => router.push('/rewards') },
+    { icon: 'trophy-outline', label: '奖惩积分', desc: `当前 ${points} 分 · 结算`, color: '#D99A3D', onPress: () => router.push('/rewards') },
     { icon: 'account-group-outline', label: '好友监督', desc: `${friends.length} 位监督好友`, color: '#6FA05C', onPress: () => router.push('/friends') },
     { icon: 'target', label: '目标设置', desc: `${goals.length} 个进行中目标`, color: '#8FA68E', onPress: () => router.push('/goal-setup') },
+    { icon: 'book-open-page-variant', label: '学习计划', desc: '4 周计划 · 可打卡', color: '#7C8FA6', onPress: () => router.push('/study') },
   ];
 
   return (
@@ -75,15 +76,15 @@ export default function ProfileScreen() {
               <View className="w-11 h-11 rounded-2xl items-center justify-center" style={{ backgroundColor: e.color + '22' }}>
                 <MaterialCommunityIcons name={e.icon as any} size={22} color={e.color} />
               </View>
-              <Text className="text-on-surface font-bold mt-3">{e.label}</Text>
-              <Text className="text-on-surface-variant text-xs mt-1">{e.desc}</Text>
+              <Text className="text-ink font-bold mt-3">{e.label}</Text>
+              <Text className="text-ink-mute text-xs mt-1">{e.desc}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* 目标列表 */}
         <View className="flex-row items-center justify-between mt-6 mb-3">
-          <Text className="text-on-surface text-base font-bold">我的目标</Text>
+          <Text className="text-ink text-base font-bold">我的目标</Text>
           <TouchableOpacity onPress={() => router.push('/goal-setup')} className="flex-row items-center gap-1">
             <MaterialCommunityIcons name="plus-circle-outline" size={18} color={COLORS.primary} />
             <Text className="text-primary text-sm font-semibold">新建</Text>
@@ -96,10 +97,10 @@ export default function ProfileScreen() {
             return (
               <TouchableOpacity key={g.id} className="bg-surface rounded-3xl p-4 shadow-card border border-outline-variant" onPress={() => router.push('/goal-detail', { id: g.id })}>
                 <View className="flex-row items-center justify-between">
-                  <Text className="text-on-surface font-bold">{g.title}</Text>
+                  <Text className="text-ink font-bold">{g.title}</Text>
                   <Text className="text-primary text-xs font-semibold">{s.todayDone}/{s.todayTotal}</Text>
                 </View>
-                <Text className="text-on-surface-variant text-xs mt-1">{g.target_value || '持续精进中'}</Text>
+                <Text className="text-ink-mute text-xs mt-1">{g.target_value || '持续精进中'}</Text>
                 <View className="h-2 rounded-full bg-surface-container mt-3 overflow-hidden">
                   <View className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: COLORS.primary }} />
                 </View>
@@ -109,7 +110,7 @@ export default function ProfileScreen() {
           {goals.filter((g) => g.status === 'active').length === 0 && (
             <TouchableOpacity className="bg-surface rounded-3xl p-5 items-center border border-dashed border-outline-variant" onPress={() => router.push('/goal-setup')}>
               <MaterialCommunityIcons name="target" size={28} color={COLORS.onSurfaceVariant} />
-              <Text className="text-on-surface-variant mt-2">还没有目标，点这里开启监督之旅吧</Text>
+              <Text className="text-ink-mute mt-2">还没有目标，点这里开启监督之旅吧</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -118,13 +119,13 @@ export default function ProfileScreen() {
         <View className="flex-row gap-3 mt-5">
           <TouchableOpacity className="flex-1 bg-secondary-container rounded-3xl p-4 shadow-card" onPress={() => router.push('/diet')}>
             <View className="w-10 h-10 rounded-full bg-white/70 items-center justify-center"><MaterialCommunityIcons name="silverware-fork-knife" size={20} color={COLORS.secondary} /></View>
-            <Text className="text-on-surface font-bold mt-3">暖心厨房</Text>
-            <Text className="text-on-surface-variant text-xs mt-1">健康饮食推荐</Text>
+            <Text className="text-ink font-bold mt-3">暖心厨房</Text>
+            <Text className="text-ink-mute text-xs mt-1">健康饮食推荐</Text>
           </TouchableOpacity>
           <TouchableOpacity className="flex-1 bg-primary-container rounded-3xl p-4 shadow-card" onPress={() => router.push('/exercise')}>
             <View className="w-10 h-10 rounded-full bg-white/70 items-center justify-center"><MaterialCommunityIcons name="run" size={20} color={COLORS.primary} /></View>
-            <Text className="text-on-surface font-bold mt-3">轻盈动起来</Text>
-            <Text className="text-on-surface-variant text-xs mt-1">科学运动计划</Text>
+            <Text className="text-ink font-bold mt-3">轻盈动起来</Text>
+            <Text className="text-ink-mute text-xs mt-1">科学运动计划</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

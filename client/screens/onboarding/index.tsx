@@ -62,16 +62,16 @@ export default function OnboardingScreen() {
         <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <View className="flex-row items-center justify-between mt-2">
             <View className="w-11" />
-            <Text className="text-lg font-bold text-on-surface">暖暖 · 认识主人啦</Text>
-            <TouchableOpacity onPress={() => router.replace('/')}><Text className="text-on-surface-variant text-sm">跳过</Text></TouchableOpacity>
+            <Text className="text-lg font-bold text-ink">暖暖 · 认识主人啦</Text>
+            <TouchableOpacity onPress={() => router.replace('/')}><Text className="text-ink-mute text-sm">跳过</Text></TouchableOpacity>
           </View>
 
           <View className="items-center mt-6">
             <View className="w-16 h-16 rounded-full bg-primary-container items-center justify-center">
               <MaterialCommunityIcons name="heart" size={30} color={COLORS.primary} />
             </View>
-            <Text className="text-2xl font-bold text-on-surface mt-3">欢迎回家，主人</Text>
-            <Text className="text-on-surface-variant text-center mt-2 leading-6">为了让暖暖更好地依据您的身体情况科学推荐饮食与运动，请先完善这份健康小档案。这些信息仅用于【健康生活方式管理】。</Text>
+            <Text className="text-2xl font-bold text-ink mt-3">欢迎回家，主人</Text>
+            <Text className="text-ink-mute text-center mt-2 leading-6">为了让暖暖更好地依据您的身体情况科学推荐饮食与运动，请先完善这份健康小档案。这些信息仅用于【健康生活方式管理】。</Text>
           </View>
 
           {/* 步骤条 */}
@@ -79,17 +79,17 @@ export default function OnboardingScreen() {
             {[1, 2, 3].map((s) => (
               <View key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? 'bg-primary' : 'bg-outline-variant'}`} />
             ))}
-            <Text className="text-on-surface-variant text-xs ml-1">{step}/3</Text>
+            <Text className="text-ink-mute text-xs ml-1">{step}/3</Text>
           </View>
 
           {step === 1 && (
             <View className="mt-6 gap-5">
-              <Text className="text-on-surface font-semibold">基本信息</Text>
+              <Text className="text-ink font-semibold">基本信息</Text>
               <Field value={height} onChangeText={setHeight} placeholder="身高（cm）" keyboardType="numeric" suffix="cm" />
               <Field value={weight} onChangeText={setWeight} placeholder="体重（kg）" keyboardType="numeric" suffix="kg" />
               <Field value={age} onChangeText={setAge} placeholder="年龄" keyboardType="numeric" suffix="岁" />
               <View>
-                <Text className="text-on-surface-variant text-sm mb-2">性别</Text>
+                <Text className="text-ink-mute text-sm mb-2">性别</Text>
                 <View className="flex-row gap-3">
                   {['男', '女'].map((g) => (
                     <Chip key={g} label={g} selected={gender === g} onPress={() => setGender(g)} />
@@ -102,7 +102,7 @@ export default function OnboardingScreen() {
 
           {step === 2 && (
             <View className="mt-6 gap-5">
-              <Text className="text-on-surface font-semibold">健康指标</Text>
+              <Text className="text-ink font-semibold">健康指标</Text>
               <View className="flex-row gap-3">
                 <View className="flex-1"><Field value={bpS} onChangeText={setBpS} placeholder="收缩压" keyboardType="numeric" suffix="mmHg" /></View>
                 <View className="flex-1"><Field value={bpD} onChangeText={setBpD} placeholder="舒张压" keyboardType="numeric" suffix="mmHg" /></View>
@@ -111,14 +111,14 @@ export default function OnboardingScreen() {
               <Field value={bloodLipid} onChangeText={setBloodLipid} placeholder="总胆固醇（mmol/L）" keyboardType="numeric" />
               <Field value={heartRate} onChangeText={setHeartRate} placeholder="静息心率（bpm）" keyboardType="numeric" suffix="bpm" />
               <View>
-                <Text className="text-on-surface-variant text-sm mb-2">过往病史（可多选）</Text>
+                <Text className="text-ink-mute text-sm mb-2">过往病史（可多选）</Text>
                 <View className="flex-row flex-wrap gap-2">
                   {HISTORIES.map((h) => <Chip key={h} label={h} selected={history.includes(h)} onPress={() => toggle(history, setHistory, h)} />)}
                 </View>
               </View>
               <View className="flex-row gap-3">
                 <TouchableOpacity className="flex-1 h-14 rounded-3xl bg-surfaceContainer items-center justify-center border border-outline-variant" onPress={() => setStep(1)}>
-                  <Text className="text-on-surface font-bold">上一步</Text>
+                  <Text className="text-ink font-bold">上一步</Text>
                 </TouchableOpacity>
                 <TouchableOpacity className="flex-1" onPress={() => setStep(3)}><View className="h-14 rounded-3xl bg-primary items-center justify-center"><Text className="text-white font-bold">下一步</Text></View></TouchableOpacity>
               </View>
@@ -127,19 +127,19 @@ export default function OnboardingScreen() {
 
           {step === 3 && (
             <View className="mt-6 gap-5">
-              <Text className="text-on-surface font-semibold">生活习惯（可选）</Text>
-              <Text className="text-on-surface-variant text-sm mb-2">饮食偏好</Text>
+              <Text className="text-ink font-semibold">生活习惯（可选）</Text>
+              <Text className="text-ink-mute text-sm mb-2">饮食偏好</Text>
               <View className="flex-row flex-wrap gap-2 mb-4">
                 {['清淡', '少盐少油', '素食', '高蛋白', '少甜食', '多蔬果'].map((d) => <Chip key={d} label={d} selected={dietPrefs.includes(d)} onPress={() => toggle(dietPrefs, setDietPrefs, d)} />)}
               </View>
               <View className="bg-primary-container rounded-3xl p-4">
                 <MaterialCommunityIcons name="leaf" size={22} color={COLORS.primary} />
-                <Text className="text-on-surface font-semibold mt-2">暖暖的小承诺</Text>
-                <Text className="text-on-surface-variant text-sm mt-1 leading-5">您的健康信息仅用于健康生活方式管理建议，不做疾病诊断、不提供药物剂量。涉及特定疾病请咨询专业医护哦。</Text>
+                <Text className="text-ink font-semibold mt-2">暖暖的小承诺</Text>
+                <Text className="text-ink-mute text-sm mt-1 leading-5">您的健康信息仅用于健康生活方式管理建议，不做疾病诊断、不提供药物剂量。涉及特定疾病请咨询专业医护哦。</Text>
               </View>
               <View className="flex-row gap-3 mt-2">
                 <TouchableOpacity className="rounded-3xl h-14 bg-surfaceContainer items-center justify-center flex-1 border border-outline-variant" onPress={() => setStep(2)}>
-                  <Text className="text-on-surface font-bold">上一步</Text>
+                  <Text className="text-ink font-bold">上一步</Text>
                 </TouchableOpacity>
                 <PrimaryButton title={saving ? '正在保存…' : '开始暖暖的陪伴之旅'} onPress={submit} loading={saving} style={{ flex: 1 }} />
               </View>
