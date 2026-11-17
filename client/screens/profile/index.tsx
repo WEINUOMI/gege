@@ -31,11 +31,12 @@ export default function ProfileScreen() {
     }, [userId])
   );
 
+  const activeGoals = goals.filter((g) => g.status === 'active');
   const entries = [
     { icon: 'heart-pulse', label: '身体状况记录', desc: profile ? '已完善 · 点击查看' : '补充健康档案', color: '#B88466', onPress: () => router.push('/body-records') },
     { icon: 'trophy-outline', label: '奖惩积分', desc: `当前 ${points} 分 · 结算`, color: '#D99A3D', onPress: () => router.push('/rewards') },
     { icon: 'account-group-outline', label: '好友监督', desc: `${friends.length} 位监督好友`, color: '#6FA05C', onPress: () => router.push('/friends') },
-    { icon: 'target', label: '目标设置', desc: `${goals.length} 个进行中目标`, color: '#8FA68E', onPress: () => router.push('/goal-setup') },
+    { icon: 'target', label: '目标设置', desc: `${activeGoals.length} 个进行中目标`, color: '#8FA68E', onPress: () => router.push('/goal-setup') },
     { icon: 'book-open-page-variant', label: '学习计划', desc: '4 周计划 · 可打卡', color: '#7C8FA6', onPress: () => router.push('/study') },
   ];
 
@@ -59,7 +60,7 @@ export default function ProfileScreen() {
               <Text className="text-white/80 text-xs mt-1">累计积分</Text>
             </View>
             <View className="flex-1 bg-white/15 rounded-2xl px-4 py-3">
-              <Text className="text-white font-bold text-xl">{goals.length}</Text>
+              <Text className="text-white font-bold text-xl">{activeGoals.length}</Text>
               <Text className="text-white/80 text-xs mt-1">进行中目标</Text>
             </View>
             <View className="flex-1 bg-white/15 rounded-2xl px-4 py-3">
@@ -91,13 +92,13 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
         <View className="gap-3">
-          {goals.filter((g) => g.status === 'active').map((g) => {
+          {activeGoals.map((g) => {
             const s = stats[g.id] || { todayDone: 0, todayTotal: 0 };
             const pct = s.todayTotal ? Math.round((s.todayDone / s.todayTotal) * 100) : 0;
             return (
               <TouchableOpacity key={g.id} className="bg-surface rounded-3xl p-4 shadow-card border border-outline-variant" onPress={() => router.push('/goal-detail', { id: g.id })}>
                 <View className="flex-row items-center justify-between">
-                  <Text className="text-ink font-bold">{g.title}</Text>
+                  <Text className="text-ink font-bold flex-1" numberOfLines={1}>{g.title}</Text>
                   <Text className="text-primary text-xs font-semibold">{s.todayDone}/{s.todayTotal}</Text>
                 </View>
                 <Text className="text-ink-mute text-xs mt-1">{g.target_value || '持续精进中'}</Text>
@@ -107,11 +108,16 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             );
           })}
-          {goals.filter((g) => g.status === 'active').length === 0 && (
+          {activeGoals.length === 0 && (
             <TouchableOpacity className="bg-surface rounded-3xl p-5 items-center border border-dashed border-outline-variant" onPress={() => router.push('/goal-setup')}>
               <MaterialCommunityIcons name="target" size={28} color={COLORS.onSurfaceVariant} />
               <Text className="text-ink-mute mt-2">还没有目标，点这里开启监督之旅吧</Text>
             </TouchableOpacity>
+          )}
+          {goals.filter((g) => g.status !== 'active').length > 0 && (
+            <Text className="text-ink-mute text-xs mt-1">
+              另有 {goals.filter((g) => g.status !== 'active').length} 个目标已暂停/结束，可在「目标设置」中重新唤醒
+            </Text>
           )}
         </View>
 

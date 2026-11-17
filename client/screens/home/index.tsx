@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, Image, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import RNSSE from 'react-native-sse';
 import dayjs from 'dayjs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +10,7 @@ import { COLORS } from '@/components/ui';
 import { useFocusEffect } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
-import { apiGet, API } from '@/utils/api';
+import { apiGet, apiPost, API, uploadProof } from '@/utils/api';
 import { RichText } from '@/components/RichText';
 
 interface Msg { id: number; role: string; content: string; message_type: string; created_at: string; }
@@ -34,6 +35,8 @@ export default function HomeScreen() {
   const [sending, setSending] = useState(false);
   const [stats, setStats] = useState({ done: 0, total: 0, goals: 0 });
   const [quickOpen, setQuickOpen] = useState(false);
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [pendingOpen, setPendingOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const sseRef = useRef<RNSSE | null>(null);
 
@@ -129,6 +132,28 @@ export default function HomeScreen() {
   const pending = reminders.filter((r) => !r.done);
   const percent = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
 
+  const pickChatImage = async () => {
+    setQuickOpen(false);
+    if (!userId) return;
+    if (Platform.OS !== 'web') {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) { Alert.alert('暖暖提醒', '需要相册权限才能发图片哦'); return; }
+    }
+    try {
+      setUploadingImg(true);
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.7 });
+      if (res.canceled) return;
+      const up = await uploadProof(res.assets[0].uri, 'image/jpeg', 'chat.jpg');
+      await apiPost(`/api/v1/chat/${userId}/messages`, { role: 'user', content: up.url, messageType: 'image' });
+      await loadMessages();
+      Alert.alert('已发送', '图片已发送给暖暖，主人可以继续聊聊');
+    } catch (e: any) {
+      Alert.alert('上传失败', e.message || '请重试');
+    } finally {
+      setUploadingImg(false);
+    }
+  };
+
   return (
     <Screen safeAreaEdges={['left', 'right', 'bottom']} backgroundColor={COLORS.bg}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
@@ -185,23 +210,26 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* 今日待办 */}
+        {/* 今日待办：默认收成一行摘要，点击展开全部（不截断），避免挤占聊天区 */}
         {pending.length > 0 && (
-          <View className="mx-4 mt-3 bg-surface rounded-3xl p-4 shadow-card border border-outline-variant">
-            <View className="flex-row items-center gap-2 mb-2">
+          <View className="mx-4 mt-3 bg-surface rounded-3xl shadow-card border border-outline-variant overflow-hidden">
+            <TouchableOpacity className="flex-row items-center px-4 py-3" onPress={() => setPendingOpen((v) => !v)}>
               <MaterialCommunityIcons name="calendar-check" size={18} color={COLORS.primary} />
-              <Text className="text-ink font-bold">还没做的（{pending.length}）</Text>
-            </View>
-            <View className="gap-2">
-              {pending.slice(0, 4).map((r) => (
-                <TouchableOpacity key={r.id} className="flex-row items-center gap-2 bg-surface-container rounded-2xl px-3 py-2.5" onPress={() => router.push('/goal-detail', { id: r.goalId })}>
-                  <MaterialCommunityIcons name={(CATEGORY_ICON[r.category] || 'calendar-check') as any} size={16} color={COLORS.onSurfaceVariant} />
-                  <Text className="flex-1 text-ink text-sm" numberOfLines={1}>{r.title}</Text>
-                  <Text className="text-ink-mute text-xs">{r.time}</Text>
-                  <View className="bg-primary px-3 py-1 rounded-full"><Text className="text-white text-xs font-bold">去打卡</Text></View>
-                </TouchableOpacity>
-              ))}
-            </View>
+              <Text className="text-ink font-bold ml-2">今日还有 {pending.length} 项没做</Text>
+              <MaterialCommunityIcons name={pendingOpen ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.onSurfaceVariant} style={{ marginLeft: 'auto' }} />
+            </TouchableOpacity>
+            {pendingOpen && (
+              <View className="gap-2 px-4 pb-4">
+                {pending.map((r) => (
+                  <TouchableOpacity key={r.id} className="flex-row items-center gap-2 bg-surface-container rounded-2xl px-3 py-2.5" onPress={() => router.push('/goal-detail', { id: r.goalId })}>
+                    <MaterialCommunityIcons name={(CATEGORY_ICON[r.category] || 'calendar-check') as any} size={16} color={COLORS.onSurfaceVariant} />
+                    <Text className="flex-1 text-ink text-sm" numberOfLines={1}>{r.title}</Text>
+                    <Text className="text-ink-mute text-xs">{r.time}</Text>
+                    <View className="bg-primary px-3 py-1 rounded-full"><Text className="text-white text-xs font-bold">去打卡</Text></View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
@@ -217,7 +245,11 @@ export default function HomeScreen() {
                 )}
                 <View className={`max-w-[78%] rounded-3xl px-4 py-2.5 ${m.role === 'user' ? 'bg-primary rounded-br-sm' : 'bg-surface rounded-bl-sm shadow-card'}`}>
                   {m.role === 'user' ? (
-                    <Text className="text-white leading-5">{m.content}</Text>
+                    m.message_type === 'image' ? (
+                      <Image source={{ uri: m.content }} style={{ width: 180, height: 180, borderRadius: 12 }} resizeMode="cover" />
+                    ) : (
+                      <Text className="text-white leading-5">{m.content}</Text>
+                    )
                   ) : (
                     <RichText content={m.content} color="#2F2A24" muted="#6B6259" size={15} />
                   )}
@@ -261,14 +293,17 @@ export default function HomeScreen() {
       <Modal visible={quickOpen} transparent animationType="fade" onRequestClose={() => setQuickOpen(false)}>
         <TouchableOpacity className="flex-1 bg-black/30 justify-end" activeOpacity={1} onPress={() => setQuickOpen(false)}>
           <View className="bg-surface rounded-t-3xl px-5 pt-5 pb-8" style={{ backgroundColor: COLORS.surface }}>
-            <Text className="text-ink font-bold text-center">记点什么？</Text>
+            <Text className="text-ink font-bold text-center">添加点什么？</Text>
             <View className="flex-row flex-wrap gap-3 mt-4">
-              {SHORTCUTS.concat([{ key: 'goal-setup', label: '设新目标', icon: 'target', color: '#8FA68E', desc: '目标设置' }] as any).map((s: any) => (
+              {([
+                { key: 'image', label: '上传图片', icon: 'image-plus', color: '#B88466', desc: '拍照/从相册选择', onPress: pickChatImage },
+                { key: 'goal-setup', label: '设新目标', icon: 'target', color: '#8FA68E', desc: '目标设置', onPress: () => router.push('/goal-setup' as any) },
+              ] as any[]).map((s: any) => (
                 <TouchableOpacity
                   key={s.key}
                   className="rounded-2xl p-4 border border-outline-variant"
                   style={{ width: '47%' }}
-                  onPress={() => { setQuickOpen(false); router.push(`/${s.key}` as any); }}
+                  onPress={s.onPress}
                 >
                   <View className="w-9 h-9 rounded-xl items-center justify-center" style={{ backgroundColor: s.color + '22' }}>
                     <MaterialCommunityIcons name={s.icon} size={18} color={s.color} />
@@ -278,6 +313,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+            {uploadingImg && <Text className="text-ink-mute text-xs text-center mt-3">图片上传中…</Text>}
             <TouchableOpacity className="h-11 items-center justify-center mt-2" onPress={() => setQuickOpen(false)}>
               <Text className="text-ink-mute text-sm">取消</Text>
             </TouchableOpacity>

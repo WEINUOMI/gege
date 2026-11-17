@@ -10,6 +10,7 @@ const PLAN_PRESETS: Record<string, { title: string; category: string; time: stri
   weight_loss: [
     { title: "晨起空腹称重并记录", category: "health", time: "07:00" },
     { title: "健康早餐拍照记录", category: "diet", time: "08:00" },
+    { title: "低卡午餐，拍照记录", category: "diet", time: "12:00" },
     { title: "快走或慢跑 30 分钟", category: "exercise", time: "19:00" },
     { title: "晚餐清淡，拍照记录", category: "diet", time: "18:30" },
     { title: "睡前 15 分钟拉伸放松", category: "exercise", time: "21:30" },
