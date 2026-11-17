@@ -131,7 +131,7 @@ export default function HomeScreen() {
 
   return (
     <Screen safeAreaEdges={['left', 'right', 'bottom']} backgroundColor={COLORS.bg}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}>
         {/* Header */}
         <View className="px-4 pb-3 flex-row items-center justify-between border-b border-outline-variant" style={{ paddingTop: insets.top + 8 }}>
           <View className="flex-row items-center gap-2">
@@ -241,7 +241,8 @@ export default function HomeScreen() {
               <MaterialCommunityIcons name="plus" size={22} color={COLORS.primary} />
             </TouchableOpacity>
             <TextInput
-              className="flex-1 rounded-3xl bg-surface-container px-4 py-2.5 text-ink text-base"
+              className="flex-1 rounded-3xl bg-surface-container px-4 text-ink text-base"
+              style={{ minHeight: 40, maxHeight: 120, paddingTop: 10, paddingBottom: 10, textAlignVertical: Platform.OS === 'android' ? 'top' : 'center' }}
               placeholder="和暖暖聊聊今天的安排吧…"
               placeholderTextColor="#A99F92"
               value={input}
