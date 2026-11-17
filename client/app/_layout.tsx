@@ -56,6 +56,7 @@ export default function RootLayout() {
               <Stack.Screen name="friends" options={{ title: '' }} />
               <Stack.Screen name="diet" options={{ title: '' }} />
               <Stack.Screen name="exercise" options={{ title: '' }} />
+              <Stack.Screen name="study" options={{ title: '' }} />
             </Stack>
             <StatusBar style="dark" />
             <Toast />

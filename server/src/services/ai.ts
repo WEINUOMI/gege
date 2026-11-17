@@ -63,6 +63,21 @@ function ctxText(ctx: HealthContext): string {
   return parts.length ? `【用户身体状况与目标】\n${parts.map((p) => `- ${p}`).join("\n")}\n` : "";
 }
 
+const MODEL = "doubao-seed-2-0-pro-260215";
+
+/** 通用文本调用：供学习计划等需要模型做个性化微调的场景使用 */
+export async function llmText(req: Request, system: string, user: string, temperature = 0.6): Promise<string> {
+  const { llm } = makeClient(req);
+  const res = await llm.invoke(
+    [
+      { role: "system" as const, content: system },
+      { role: "user" as const, content: user },
+    ],
+    { model: MODEL, temperature }
+  );
+  return res.content || "";
+}
+
 export async function chatReply(req: Request, history: { role: string; content: string }[], ctx: HealthContext): Promise<string> {
   const { llm } = makeClient(req);
   const messages = [

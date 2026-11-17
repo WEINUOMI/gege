@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { getSupabaseClient } from "../storage/database/supabase-client";
 import { fileUrl } from "../services/storage";
-import { localToday, todayRange } from "../utils/date";
+import { localToday, todayRange, dayRange, lastNDays } from "../utils/date";
 
 const router = Router();
 const client = getSupabaseClient();
@@ -344,6 +344,122 @@ router.get("/:id/checkins", async (req, res) => {
       .limit(50);
     if (error) throw new Error(error.message);
     return res.json({ checkins: data || [] });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== 短期目标结算 =====
+function periodDays(period: string): string[] {
+  if (period === "month") {
+    const t = localToday();
+    const first = `${t.slice(0, 7)}-01`;
+    const total = Number(t.slice(8, 10));
+    return lastNDays(total);
+  }
+  if (period === "today") return [localToday()];
+  return lastNDays(7);
+}
+
+async function buildSettlement(goalId: string, period: string, userId?: string) {
+  const { data: goal } = await client.from("goals").select("*").eq("id", goalId).maybeSingle();
+  if (!goal) throw new Error("目标不存在");
+  const { data: planItems } = await client.from("plan_items").select("id").eq("goal_id", goalId);
+  const itemCount = (planItems || []).length || 1;
+  const days = periodDays(period);
+  const ownerId = userId || String(goal.user_id);
+
+  const { data: rows } = await client
+    .from("checkins")
+    .select("id,title,checkin_date,points")
+    .eq("goal_id", goalId)
+    .eq("user_id", ownerId)
+    .gte("checkin_date", dayRange(days[0]).start)
+    .lte("checkin_date", dayRange(days[days.length - 1]).end);
+
+  const list = rows || [];
+  const perDay: Record<string, number> = {};
+  days.forEach((d) => { perDay[d] = 0; });
+  list.forEach((r: any) => {
+    const d = localToday(new Date(r.checkin_date));
+    if (perDay[d] !== undefined) perDay[d] += 1;
+  });
+
+  const expected = itemCount * days.length;
+  const actual = list.length;
+  const rate = expected ? Math.min(1, actual / expected) : 0;
+  const missingDays = days.filter((d) => perDay[d] === 0);
+  const dailyPoints = Number(goal.daily_points) || 20;
+  const penaltyPerDay = Math.ceil(dailyPoints / 2);
+
+  let verdict: "达成" | "接近" | "未达成";
+  if (rate >= 0.8) verdict = "达成";
+  else if (rate >= 0.5) verdict = "接近";
+  else verdict = "未达成";
+
+  const rewards: string[] = Array.isArray(goal.rewards) ? goal.rewards : [];
+  const punishments: string[] = Array.isArray(goal.punishments) ? goal.punishments : [];
+
+  return {
+    goal: { id: goal.id, title: goal.title, dailyPoints },
+    period,
+    days,
+    range: `${days[0]} ~ ${days[days.length - 1]}`,
+    expected,
+    actual,
+    rate: Math.round(rate * 100),
+    missingDays,
+    missingCount: missingDays.length,
+    perDay,
+    earnedPoints: list.reduce((s: number, r: any) => s + Number(r.points || 0), 0),
+    verdict,
+    suggestReward: verdict === "达成" ? rewards[0] || "给自己一个不超预算的小奖励" : null,
+    suggestPunishment: verdict === "达成" ? null : punishments[0] || `补上漏掉的 ${missingDays.length} 天，并做一次复盘`,
+    bonusPoints: verdict === "达成" ? Math.round(dailyPoints * 0.5) : 0,
+    penaltyPoints: verdict === "达成" ? 0 : -Math.min(60, missingDays.length * penaltyPerDay),
+  };
+}
+
+// 结算预览（不写入任何数据）
+// 接口：GET /api/v1/goals/:id/settlement?period=week|month|today&userId=
+router.get("/:id/settlement", async (req, res) => {
+  try {
+    const period = String(req.query.period || "week");
+    const data = await buildSettlement(req.params.id, period, req.query.userId as string | undefined);
+    return res.json(data);
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// 执行结算（写入积分流水；同一周期重复调用不会重复计分）
+// 接口：POST /api/v1/goals/:id/settlement
+// Body 参数：userId?: string, period: 'week'|'month'|'today'
+router.post("/:id/settlement", async (req, res) => {
+  try {
+    const goalId = req.params.id;
+    const { userId, period = "week" } = req.body || {};
+    const s = await buildSettlement(goalId, String(period), userId ? String(userId) : undefined);
+    const { data: goal } = await client.from("goals").select("user_id").eq("id", goalId).maybeSingle();
+    const uid = userId ? String(userId) : String(goal?.user_id || "");
+    if (!uid) return res.status(400).json({ error: "缺少 userId" });
+
+    const reasonTag = `周期结算 ${s.range}`;
+    const { data: existed } = await client.from("points").select("id").eq("user_id", uid).eq("goal_id", Number(goalId)).like("reason", `%${reasonTag}%`).limit(1);
+    if (existed && existed.length) {
+      return res.json({ already: true, settlement: s, message: "这个周期已经结算过了，不会重复计分" });
+    }
+
+    const amount = s.verdict === "达成" ? s.bonusPoints : s.penaltyPoints;
+    if (amount !== 0) {
+      await client.from("points").insert({
+        user_id: uid,
+        goal_id: Number(goalId),
+        amount,
+        reason: `${reasonTag} · ${s.verdict}${amount > 0 ? "奖励" : "补扣"}`,
+      });
+    }
+    return res.json({ already: false, settlement: s, points: amount });
   } catch (e: any) {
     return res.status(500).json({ error: e.message });
   }

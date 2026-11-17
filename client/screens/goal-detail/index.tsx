@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Modal, Image, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Image, TextInput, Alert, ActivityIndicator, Platform, Linking } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,8 +11,8 @@ import { useSafeRouter, useSafeSearchParams } from '@/hooks/useSafeRouter';
 import { apiGet, apiPost, uploadProof } from '@/utils/api';
 
 interface Goal { id: number; title: string; target_value: string; category: string; status: string; daily_points: number; }
-interface Item { id: number; title: string; category: string; planned_time: string; doneToday: boolean; }
-interface Checkin { id: number; title: string; checkin_date: string; proof_url: string; points_earned: number; user_id: string; }
+interface Item { id: number; title: string; category: string; planned_time: string; points: number; doneToday: boolean; }
+interface Checkin { id: number; title: string; checkin_date: string; proof_url: string; points: number; proof_type: string; user_id: string; }
 
 export default function GoalDetailScreen() {
   const router = useSafeRouter();
@@ -72,17 +72,48 @@ export default function GoalDetailScreen() {
     }
   };
 
-  const doCheckin = async (item: Item, uri: string) => {
+  const doCheckin = async (item: Item, uri: string, isVideo = false) => {
     if (!userId) return;
     setUploading(true);
     try {
-      const up = await uploadProof(uri, 'image/jpeg', 'proof.jpg');
-      await apiPost(`/api/v1/goals/${id}/checkins`, { userId, title: item.title, planItemId: item.id, proofKey: up.key, proofType: 'image' });
+      const up = await uploadProof(uri, isVideo ? 'video/mp4' : 'image/jpeg', isVideo ? 'proof.mp4' : 'proof.jpg');
+      await apiPost(`/api/v1/goals/${id}/checkins`, {
+        userId, title: item.title, planItemId: item.id, proofKey: up.key, proofType: isVideo ? 'video' : 'image',
+      });
       await load();
     } catch (e: any) {
       Alert.alert('打卡失败', e.message || '请重试');
     } finally {
       setUploading(false);
+    }
+  };
+
+  // 视频凭证：直接从相册选一段视频上传
+  const pickVideo = async () => {
+    if (!current) return;
+    setCkOpen(false);
+    try {
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], quality: 0.6 });
+      if (res.canceled) return;
+      await doCheckin(current, res.assets[0].uri, true);
+    } catch {
+      Alert.alert('没能打开视频', '可以先改用照片凭证');
+    }
+  };
+
+  // 拍一段短视频（原生支持；Web 端回退到相册）
+  const recordVideo = async () => {
+    if (!current) return;
+    setCkOpen(false);
+    if (Platform.OS === 'web') return pickVideo();
+    try {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) { Alert.alert('需要相机权限', '开启后就能拍视频凭证'); return; }
+      const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['videos'], videoMaxDuration: 30, quality: 0.6 });
+      if (res.canceled) return;
+      await doCheckin(current, res.assets[0].uri, true);
+    } catch {
+      Alert.alert('没能拍摄视频', '可以先改用照片凭证');
     }
   };
 
@@ -131,7 +162,7 @@ export default function GoalDetailScreen() {
                   </View>
                   <View className="flex-1">
                     <Text className={`text-on-surface font-semibold ${it.doneToday ? 'line-through text-on-surface-variant' : ''}`}>{it.title}</Text>
-                    <Text className="text-on-surface-variant text-xs mt-0.5">{it.planned_time || '全天'} · +{10}积分</Text>
+                    <Text className="text-on-surface-variant text-xs mt-0.5">{it.planned_time || '全天'} · +{it.points || 10}积分</Text>
                   </View>
                   {!it.doneToday && (
                     <TouchableOpacity className="bg-primary px-4 py-2 rounded-full" onPress={() => { setCurrent(it); setCkOpen(true); }}>
@@ -149,12 +180,20 @@ export default function GoalDetailScreen() {
                 {checkins.map((c) => (
                   <View key={c.id} className="bg-surface rounded-3xl p-4 shadow-card border border-outline-variant">
                     <View className="flex-row items-center gap-3">
-                      {c.proof_url ? <Image source={{ uri: c.proof_url }} className="w-14 h-14 rounded-2xl" /> : <View className="w-14 h-14 rounded-2xl bg-surface-container items-center justify-center"><MaterialCommunityIcons name="image-outline" size={20} color={COLORS.onSurfaceVariant} /></View>}
+                      {c.proof_url && c.proof_type === 'video' ? (
+                        <TouchableOpacity className="w-14 h-14 rounded-2xl bg-surface-container items-center justify-center" onPress={() => Linking.openURL(c.proof_url)}>
+                          <MaterialCommunityIcons name="play-circle" size={28} color={COLORS.primary} />
+                        </TouchableOpacity>
+                      ) : c.proof_url ? (
+                        <Image source={{ uri: c.proof_url }} className="w-14 h-14 rounded-2xl" />
+                      ) : (
+                        <View className="w-14 h-14 rounded-2xl bg-surface-container items-center justify-center"><MaterialCommunityIcons name="image-outline" size={20} color={COLORS.onSurfaceVariant} /></View>
+                      )}
                       <View className="flex-1">
                         <Text className="text-on-surface font-semibold">{c.title}</Text>
                         <Text className="text-on-surface-variant text-xs mt-0.5">{c.user_id === String(user?.id) ? '我' : '监督同伴'} · {new Date(c.checkin_date).toLocaleDateString()}</Text>
                       </View>
-                      <View className="bg-primary-container px-3 py-1 rounded-full"><Text className="text-primary text-xs font-bold">+{c.points_earned}</Text></View>
+                      <View className="bg-primary-container px-3 py-1 rounded-full"><Text className="text-primary text-xs font-bold">+{c.points || 0}</Text></View>
                     </View>
                     {/* 留言 */}
                     {c.id && comments.filter((cm) => cm.checkin_id === c.id).length > 0 && (
@@ -204,10 +243,20 @@ export default function GoalDetailScreen() {
       <Modal visible={ckOpen} transparent animationType="fade" onRequestClose={() => setCkOpen(false)}>
         <TouchableOpacity className="flex-1 bg-black/30 items-center justify-center" onPress={() => setCkOpen(false)}>
           <View className="bg-surface rounded-3xl w-4/5 p-5" style={{ backgroundColor: COLORS.surface }}>
-            <Text className="text-on-surface font-bold text-center mb-4">上传《{current?.title}》打卡凭证</Text>
+                    <Text className="text-on-surface font-bold text-center mb-4">上传《{current?.title}》打卡凭证</Text>
             <PrimaryButton title="拍照打卡" onPress={() => current && takePhoto(current)} loading={uploading} />
             <View className="h-3" />
             <PrimaryButton title="从相册选择照片" onPress={() => current && pickProof(current)} loading={uploading} style={{ backgroundColor: COLORS.secondary }} />
+            <View className="h-3" />
+            <TouchableOpacity className="h-12 rounded-2xl border border-outline-variant items-center justify-center flex-row gap-2" onPress={recordVideo} disabled={uploading}>
+              <MaterialCommunityIcons name="video-outline" size={18} color={COLORS.primary} />
+              <Text className="text-on-surface text-sm font-semibold">拍一段视频凭证</Text>
+            </TouchableOpacity>
+            <View className="h-2" />
+            <TouchableOpacity className="h-12 rounded-2xl border border-outline-variant items-center justify-center flex-row gap-2" onPress={pickVideo} disabled={uploading}>
+              <MaterialCommunityIcons name="filmstrip" size={18} color={COLORS.secondary} />
+              <Text className="text-on-surface text-sm font-semibold">从相册选视频</Text>
+            </TouchableOpacity>
             <View className="h-3" />
             <TouchableOpacity className="h-12 items-center justify-center" onPress={() => setCkOpen(false)}><Text className="text-on-surface-variant">取消</Text></TouchableOpacity>
           </View>

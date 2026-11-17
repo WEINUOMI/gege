@@ -33,9 +33,10 @@ export default function ProfileScreen() {
 
   const entries = [
     { icon: 'heart-pulse', label: '身体状况记录', desc: profile ? '已完善 · 点击查看' : '补充健康档案', color: '#B88466', onPress: () => router.push('/body-records') },
-    { icon: 'trophy-outline', label: '奖惩积分', desc: `当前 ${points} 分`, color: '#D99A3D', onPress: () => router.push('/rewards') },
+    { icon: 'trophy-outline', label: '奖惩积分', desc: `当前 ${points} 分 · 结算`, color: '#D99A3D', onPress: () => router.push('/rewards') },
     { icon: 'account-group-outline', label: '好友监督', desc: `${friends.length} 位监督好友`, color: '#6FA05C', onPress: () => router.push('/friends') },
     { icon: 'target', label: '目标设置', desc: `${goals.length} 个进行中目标`, color: '#8FA68E', onPress: () => router.push('/goal-setup') },
+    { icon: 'book-open-page-variant', label: '学习计划', desc: '4 周计划 · 可打卡', color: '#7C8FA6', onPress: () => router.push('/study') },
   ];
 
   return (

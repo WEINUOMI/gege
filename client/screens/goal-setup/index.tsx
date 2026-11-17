@@ -16,6 +16,9 @@ const CATEGORIES = [
 ];
 const METRICS = ['体重', '体脂率', 'BMI', '血压', '血糖', '血脂', '腰围', '学习时长', '睡眠', '步数'];
 
+const REWARD_PRESETS = ['给自己买一件小东西', '看一场电影', '睡到自然醒', '吃一顿想吃的饭', '买一本想读的书', '出去玩半天'];
+const PUNISH_PRESETS = ['补上漏掉的天数', '请家人吃一顿饭', '少看一天短视频', '做一次深度复盘', '把手机放下一小时', '捐 20 元给公益'];
+
 export default function GoalSetupScreen() {
   const router = useSafeRouter();
   const { userId } = useUser();
@@ -29,8 +32,12 @@ export default function GoalSetupScreen() {
   const [ciTitle, setCiTitle] = useState('');
   const [ciTime, setCiTime] = useState('');
   const [saving, setSaving] = useState(false);
+  const [rewards, setRewards] = useState<string[]>(['给自己买一件小东西']);
+  const [punishments, setPunishments] = useState<string[]>(['补上漏掉的天数']);
 
   const toggleMetrics = (v: string) => setMetrics((m) => (m.includes(v) ? m.filter((x) => x !== v) : [...m, v]));
+  const toggleIn = (arr: string[], set: (v: string[]) => void, v: string) =>
+    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   const addItem = () => {
     if (!ciTitle.trim()) return;
     setCustomItems((l) => [...l, { title: ciTitle.trim(), time: ciTime || '全天' }]);
@@ -51,6 +58,8 @@ export default function GoalSetupScreen() {
         metrics, targetValue: targetValue || undefined, targetMetric: targetMetric || undefined,
         startDate: new Date().toISOString().slice(0, 10),
         dailyPoints: 20,
+        rewards,
+        punishments,
         planItems: planMode === 'custom' && customItems.length ? customItems.map((c) => ({ title: c.title, planned_time: c.time })) : undefined,
       });
       router.replace('/goal-detail', { id: res.goal.id });
@@ -127,6 +136,25 @@ export default function GoalSetupScreen() {
                 </View>
               </View>
             )}
+          </View>
+          <View className="mt-6">
+            <Text className="text-on-surface font-bold mb-1">达成了怎么奖励自己？</Text>
+            <Text className="text-on-surface-variant text-[11px] mb-2">结算时会按你选的第一项提醒你兑现</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {REWARD_PRESETS.map((r) => (
+                <Chip key={r} label={r} selected={rewards.includes(r)} onPress={() => toggleIn(rewards, setRewards, r)} />
+              ))}
+            </View>
+          </View>
+
+          <View className="mt-6">
+            <Text className="text-on-surface font-bold mb-1">没做到怎么补？</Text>
+            <Text className="text-on-surface-variant text-[11px] mb-2">比「自责」更有效的是定一个具体的补偿动作</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {PUNISH_PRESETS.map((p) => (
+                <Chip key={p} label={p} selected={punishments.includes(p)} onPress={() => toggleIn(punishments, setPunishments, p)} />
+              ))}
+            </View>
           </View>
         </ScrollView>
         <View className="px-5 pb-6 pt-2" style={{ backgroundColor: COLORS.bg }}>

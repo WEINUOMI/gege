@@ -5,6 +5,7 @@ import goalsRouter from "./routes/goals";
 import friendsRouter from "./routes/friends";
 import chatRouter from "./routes/chat";
 import recommendRouter from "./routes/recommend";
+import recordsRouter from "./routes/records";
 import uploadRouter from "./routes/upload";
 import { getSupabaseClient } from "./storage/database/supabase-client";
 
@@ -46,6 +47,7 @@ app.use("/api/v1/goals", goalsRouter);
 app.use("/api/v1/friends", friendsRouter);
 app.use("/api/v1/chat", chatRouter);
 app.use("/api/v1/recommend", recommendRouter);
+app.use("/api/v1/records", recordsRouter);
 app.use("/api/v1/upload", uploadRouter);
 
 // 404
