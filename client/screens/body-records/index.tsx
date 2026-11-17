@@ -65,12 +65,12 @@ export default function BodyRecordsScreen() {
       <PageHeader title="身体状况记录" />
       <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <View className="bg-primary-container rounded-3xl p-4 my-4">
-          <Text className="text-on-surface text-xs leading-6">
+          <Text className="text-ink text-xs leading-6">
             这些信息用来筛选饮食与运动建议，定位是【健康生活方式管理】，不做诊断、不给药物剂量。随时可以回来修改。
           </Text>
         </View>
 
-        <Text className="text-on-surface font-bold mb-3">基础信息</Text>
+        <Text className="text-ink font-bold mb-3">基础信息</Text>
         <View className="gap-3 mb-5">
           <Field value={form.height} onChangeText={set('height')} placeholder="身高（cm）" suffix="cm" />
           <Field value={form.weight} onChangeText={set('weight')} placeholder="体重（kg）" suffix="kg" />
@@ -81,7 +81,7 @@ export default function BodyRecordsScreen() {
           <Field value={form.age?.toString()} onChangeText={set('age')} placeholder="年龄" suffix="岁" />
         </View>
 
-        <Text className="text-on-surface font-bold mb-3">健康指标</Text>
+        <Text className="text-ink font-bold mb-3">健康指标</Text>
         <View className="gap-3 mb-6">
           <View className="flex-row gap-3">
             <View className="flex-1"><Field value={form.blood_pressure_systolic} onChangeText={set('blood_pressure_systolic')} placeholder="收缩压" suffix="mmHg" /></View>
@@ -92,15 +92,15 @@ export default function BodyRecordsScreen() {
           <Field value={form.heart_rate} onChangeText={set('heart_rate')} placeholder="静息心率（bpm）" suffix="bpm" />
         </View>
 
-        <Text className="text-on-surface font-bold mb-2">过往病史（多选）</Text>
-        <Text className="text-on-surface-variant text-[11px] mb-2">勾选后，系统会自动避开不适配的菜谱与运动</Text>
+        <Text className="text-ink font-bold mb-2">过往病史（多选）</Text>
+        <Text className="text-ink-mute text-[11px] mb-2">勾选后，系统会自动避开不适配的菜谱与运动</Text>
         <View className="flex-row flex-wrap gap-2 mb-6">
           {HISTORIES.map((h) => (
             <Chip key={h} label={h} selected={(form.medical_history || []).includes(h)} onPress={() => toggleIn('medical_history', h)} />
           ))}
         </View>
 
-        <Text className="text-on-surface font-bold mb-2">饮食偏好</Text>
+        <Text className="text-ink font-bold mb-2">饮食偏好</Text>
         <View className="flex-row flex-wrap gap-2 mb-6">
           {DIET_PREFS.map((d) => (
             <Chip key={d} label={d} selected={(form.diet_prefs || []).includes(d)} onPress={() => toggleIn('diet_prefs', d)} />
@@ -110,8 +110,8 @@ export default function BodyRecordsScreen() {
         <PrimaryButton title={saving ? '正在保存…' : '保存身体记录'} onPress={save} loading={saving} />
 
         {/* 趋势 */}
-        <Text className="text-on-surface font-bold mt-6 mb-1">最近 7 天摄入与消耗</Text>
-        <Text className="text-on-surface-variant text-[11px] mb-3">数据来自「暖心厨房」与「轻盈动起来」里的记录</Text>
+        <Text className="text-ink font-bold mt-6 mb-1">最近 7 天摄入与消耗</Text>
+        <Text className="text-ink-mute text-[11px] mb-3">数据来自「暖心厨房」与「轻盈动起来」里的记录</Text>
         <View className="bg-surface rounded-3xl p-4 border border-outline-variant shadow-card">
           {trend.some((t) => (t.intake || 0) + (t.burn || 0) > 0) ? (
             <>
@@ -127,45 +127,45 @@ export default function BodyRecordsScreen() {
               </View>
               <View className="flex-row justify-between mt-2">
                 {trend.map((t) => (
-                  <Text key={t.date} className="text-on-surface-variant text-[9px] flex-1 text-center">{t.date.slice(5)}</Text>
+                  <Text key={t.date} className="text-ink-mute text-[9px] flex-1 text-center">{t.date.slice(5)}</Text>
                 ))}
               </View>
               <View className="flex-row gap-4 mt-3 justify-center">
                 <View className="flex-row items-center gap-1.5">
                   <View className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS.secondary }} />
-                  <Text className="text-on-surface-variant text-[10px]">摄入 kcal</Text>
+                  <Text className="text-ink-mute text-[11px]">摄入 kcal</Text>
                 </View>
                 <View className="flex-row items-center gap-1.5">
                   <View className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS.primary }} />
-                  <Text className="text-on-surface-variant text-[10px]">消耗 kcal</Text>
+                  <Text className="text-ink-mute text-[11px]">消耗 kcal</Text>
                 </View>
               </View>
             </>
           ) : (
             <View className="items-center py-4">
               <MaterialCommunityIcons name="chart-line" size={26} color={COLORS.onSurfaceVariant} />
-              <Text className="text-on-surface-variant text-xs mt-2 text-center">还没有记录{'\n'}在厨房或运动页记一笔，这里就会长出柱状图</Text>
+              <Text className="text-ink-mute text-xs mt-2 text-center">还没有记录{'\n'}在厨房或运动页记一笔，这里就会长出柱状图</Text>
             </View>
           )}
         </View>
 
         {/* 历史 */}
-        <Text className="text-on-surface font-bold mt-6 mb-3">历史记录</Text>
+        <Text className="text-ink font-bold mt-6 mb-3">历史记录</Text>
         {records.length ? records.slice(0, 10).map((r) => (
           <View key={r.id} className="bg-surface rounded-3xl p-4 border border-outline-variant mb-2 shadow-card">
-            <Text className="text-on-surface-variant text-xs">{new Date(r.recorded_at).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
+            <Text className="text-ink-mute text-xs">{new Date(r.recorded_at).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
             <View className="flex-row flex-wrap gap-x-4 gap-y-1 mt-2">
-              {r.blood_pressure_systolic && <Text className="text-on-surface text-sm">血压 {r.blood_pressure_systolic}/{r.blood_pressure_diastolic}</Text>}
-              {r.blood_sugar && <Text className="text-on-surface text-sm">血糖 {r.blood_sugar}</Text>}
-              {r.heart_rate && <Text className="text-on-surface text-sm">心率 {r.heart_rate}</Text>}
-              {r.weight && <Text className="text-on-surface text-sm">体重 {r.weight}kg</Text>}
-              {r.waist && <Text className="text-on-surface text-sm">腰围 {r.waist}cm</Text>}
+              {r.blood_pressure_systolic && <Text className="text-ink text-sm">血压 {r.blood_pressure_systolic}/{r.blood_pressure_diastolic}</Text>}
+              {r.blood_sugar && <Text className="text-ink text-sm">血糖 {r.blood_sugar}</Text>}
+              {r.heart_rate && <Text className="text-ink text-sm">心率 {r.heart_rate}</Text>}
+              {r.weight && <Text className="text-ink text-sm">体重 {r.weight}kg</Text>}
+              {r.waist && <Text className="text-ink text-sm">腰围 {r.waist}cm</Text>}
             </View>
           </View>
         )) : (
           <View className="bg-surface rounded-3xl p-6 items-center border border-dashed border-outline-variant">
             <MaterialCommunityIcons name="chart-line" size={28} color={COLORS.onSurfaceVariant} />
-            <Text className="text-on-surface-variant mt-2 text-sm">还没有历史记录，点上方保存即可生成第一条</Text>
+            <Text className="text-ink-mute mt-2 text-sm">还没有历史记录，点上方保存即可生成第一条</Text>
           </View>
         )}
       </ScrollView>

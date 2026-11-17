@@ -107,7 +107,7 @@ export default function StudyScreen() {
         <View className="bg-surface rounded-3xl p-4 mt-4 border border-outline-variant shadow-card">
           <View className="flex-row items-center gap-2">
             <MaterialCommunityIcons name="school-outline" size={18} color={COLORS.primary} />
-            <Text className="text-on-surface font-bold">今天已学</Text>
+            <Text className="text-ink font-bold">今天已学</Text>
             <Text className="text-primary text-sm ml-auto">{todayStudy.length} 次打卡</Text>
           </View>
           {todayStudy.length ? (
@@ -115,17 +115,17 @@ export default function StudyScreen() {
               {todayStudy.slice(0, 3).map((r: any) => (
                 <View key={r.id} className="flex-row items-center gap-2 py-1">
                   <MaterialCommunityIcons name="check-circle" size={13} color={COLORS.primary} />
-                  <Text className="flex-1 text-on-surface-variant text-xs" numberOfLines={1}>{r.title}</Text>
+                  <Text className="flex-1 text-ink-mute text-xs" numberOfLines={1}>{r.title}</Text>
                 </View>
               ))}
             </View>
           ) : (
-            <Text className="text-on-surface-variant text-xs mt-2">今天还没有学习打卡，先定一个能立刻开始的小任务吧</Text>
+            <Text className="text-ink-mute text-xs mt-2">今天还没有学习打卡，先定一个能立刻开始的小任务吧</Text>
           )}
         </View>
 
         {/* 方向 */}
-        <Text className="text-on-surface font-bold mt-5 mb-2">你想学什么？</Text>
+        <Text className="text-ink font-bold mt-5 mb-2">你想学什么？</Text>
         <View className="flex-row flex-wrap gap-2">
           {DIRECTIONS.map((d) => (
             <TouchableOpacity
@@ -134,7 +134,7 @@ export default function StudyScreen() {
               onPress={() => setDirection(d.key)}
             >
               <MaterialCommunityIcons name={d.icon as any} size={15} color={direction === d.key ? COLORS.primary : COLORS.onSurfaceVariant} />
-              <Text className="text-on-surface text-xs">{d.label}</Text>
+              <Text className="text-ink text-xs">{d.label}</Text>
             </TouchableOpacity>
           ))}
           <TouchableOpacity
@@ -142,7 +142,7 @@ export default function StudyScreen() {
             onPress={() => setDirection('__custom')}
           >
             <MaterialCommunityIcons name="plus" size={15} color={COLORS.onSurfaceVariant} />
-            <Text className="text-on-surface text-xs">自己写</Text>
+            <Text className="text-ink text-xs">自己写</Text>
           </TouchableOpacity>
         </View>
 
@@ -153,7 +153,7 @@ export default function StudyScreen() {
               onChangeText={setCustom}
               placeholder="比如：学会用 Excel 做数据透视表"
               placeholderTextColor="#A99F92"
-              className="bg-surface rounded-2xl px-4 py-3 text-on-surface border border-outline-variant"
+              className="bg-surface rounded-2xl px-4 py-3 text-ink border border-outline-variant"
               selectionColor={COLORS.primary}
             />
           </View>
@@ -168,14 +168,14 @@ export default function StudyScreen() {
         {plan && !loading && (
           <>
             <View className="bg-secondary-container rounded-3xl p-4 mt-5">
-              <Text className="text-on-surface font-bold text-sm">{plan.direction}</Text>
-              <Text className="text-on-surface-variant text-xs leading-5 mt-1.5">{plan.summary}</Text>
-              <Text className="text-[10px] text-on-surface-variant mt-2">
+              <Text className="text-ink font-bold text-sm">{plan.direction}</Text>
+              <Text className="text-ink-mute text-xs leading-5 mt-1.5">{plan.summary}</Text>
+              <Text className="text-[11px] text-ink-mute mt-2">
                 {personalized ? '已结合你的目标和身体情况做过微调' : '按通用方法框架生成（模型未参与微调）'}
               </Text>
             </View>
 
-            <Text className="text-on-surface font-bold mt-5 mb-2">每周安排</Text>
+            <Text className="text-ink font-bold mt-5 mb-2">每周安排</Text>
             <View className="gap-2">
               {plan.weeks.map((w) => {
                 const expanded = openWeek === w.index;
@@ -187,8 +187,8 @@ export default function StudyScreen() {
                         <Text className="text-primary font-bold text-xs">{w.index}</Text>
                       </View>
                       <View className="flex-1">
-                        <Text className="text-on-surface font-semibold text-sm">{w.focus}</Text>
-                        <Text className="text-on-surface-variant text-[11px] mt-0.5">{w.tasks.length} 个任务 · 每天约 {total} 分钟</Text>
+                        <Text className="text-ink font-semibold text-sm">{w.focus}</Text>
+                        <Text className="text-ink-mute text-[11px] mt-0.5">{w.tasks.length} 个任务 · 每天约 {total} 分钟</Text>
                       </View>
                       <MaterialCommunityIcons name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={COLORS.onSurfaceVariant} />
                     </TouchableOpacity>
@@ -198,8 +198,8 @@ export default function StudyScreen() {
                         {w.tasks.map((t, i) => (
                           <View key={i} className="flex-row items-start gap-2 py-1.5">
                             <MaterialCommunityIcons name="circle-small" size={16} color={COLORS.primary} />
-                            <Text className="flex-1 text-on-surface text-xs leading-5">{t.title}</Text>
-                            <Text className="text-on-surface-variant text-[10px]">{t.minutes}′</Text>
+                            <Text className="flex-1 text-ink text-xs leading-5">{t.title}</Text>
+                            <Text className="text-ink-mute text-[11px]">{t.minutes}′</Text>
                           </View>
                         ))}
                         <TouchableOpacity
@@ -219,23 +219,23 @@ export default function StudyScreen() {
 
             {goalId && (
               <TouchableOpacity className="mt-3 h-12 rounded-2xl border border-outline-variant items-center justify-center" onPress={() => router.push('/goal-detail', { id: goalId })}>
-                <Text className="text-on-surface text-sm">去看学习目标的打卡页 →</Text>
+                <Text className="text-ink text-sm">去看学习目标的打卡页 →</Text>
               </TouchableOpacity>
             )}
 
-            <Text className="text-on-surface font-bold mt-5 mb-2">配套资料</Text>
+            <Text className="text-ink font-bold mt-5 mb-2">配套资料</Text>
             <View className="gap-2">
               {plan.resources.map((r, i) => (
                 <View key={i} className="bg-surface rounded-2xl p-3.5 border border-outline-variant">
                   <View className="flex-row items-center gap-2">
-                    <View className="bg-primary-container px-2 py-0.5 rounded-full"><Text className="text-[10px] text-on-surface">{r.kind}</Text></View>
-                    <Text className="flex-1 text-on-surface text-sm font-medium">{r.title}</Text>
+                    <View className="bg-primary-container px-2 py-0.5 rounded-full"><Text className="text-[11px] text-ink">{r.kind}</Text></View>
+                    <Text className="flex-1 text-ink text-sm font-medium">{r.title}</Text>
                   </View>
-                  <Text className="text-on-surface-variant text-[11px] mt-1">{r.note}</Text>
+                  <Text className="text-ink-mute text-[11px] mt-1">{r.note}</Text>
                 </View>
               ))}
             </View>
-            <Text className="text-on-surface-variant text-[10px] mt-3 leading-4">
+            <Text className="text-ink-mute text-[11px] mt-3 leading-4">
               计划为通用方法框架，具体书目、课程与考试要求请以官方来源为准。
             </Text>
           </>
@@ -244,7 +244,7 @@ export default function StudyScreen() {
         {!plan && !loading && (
           <View className="bg-surface rounded-3xl p-6 items-center border border-dashed border-outline-variant mt-5">
             <MaterialCommunityIcons name="book-open-outline" size={30} color={COLORS.onSurfaceVariant} />
-            <Text className="text-on-surface-variant mt-2 text-center text-sm">
+            <Text className="text-ink-mute mt-2 text-center text-sm">
               先选一个方向，暖暖会给你排一份{'\n'}每天能照着做的 4 周计划
             </Text>
           </View>

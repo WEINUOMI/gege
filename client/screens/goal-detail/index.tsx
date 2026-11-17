@@ -141,11 +141,11 @@ export default function GoalDetailScreen() {
         {goal && (
           <>
             <View className="bg-surface rounded-3xl p-5 shadow-card border border-outline-variant my-4">
-              <Text className="text-on-surface text-lg font-bold">{goal.title}</Text>
-              <Text className="text-on-surface-variant text-sm mt-1">{goal.target_value || goal.category}</Text>
+              <Text className="text-ink text-lg font-bold">{goal.title}</Text>
+              <Text className="text-ink-mute text-sm mt-1">{goal.target_value || goal.category}</Text>
               <View className="flex-row items-center gap-3 mt-4">
                 <View className="flex-1">
-                  <View className="flex-row justify-between mb-1"><Text className="text-on-surface-variant text-xs">今日进度</Text><Text className="text-primary text-xs font-bold">{goalDone}/{items.length}</Text></View>
+                  <View className="flex-row justify-between mb-1"><Text className="text-ink-mute text-xs">今日进度</Text><Text className="text-primary text-xs font-bold">{goalDone}/{items.length}</Text></View>
                   <View className="h-2.5 rounded-full bg-surface-container overflow-hidden"><View className="h-full rounded-full" style={{ width: `${percent}%`, backgroundColor: COLORS.primary }} /></View>
                 </View>
                 <Text className="text-primary text-2xl font-bold">{percent}%</Text>
@@ -153,7 +153,7 @@ export default function GoalDetailScreen() {
             </View>
 
             {/* 每日打卡计划 */}
-            <Text className="text-on-surface font-bold mb-3">今日打卡计划</Text>
+            <Text className="text-ink font-bold mb-3">今日打卡计划</Text>
             <View className="gap-3 mb-6">
               {items.map((it) => (
                 <View key={it.id} className="bg-surface rounded-3xl p-4 shadow-card border border-outline-variant flex-row items-center gap-3">
@@ -161,8 +161,8 @@ export default function GoalDetailScreen() {
                     <MaterialCommunityIcons name={it.doneToday ? 'check' : (CATEGORY_ICON[it.category] || 'checkbox-blank-circle-outline') as any} size={22} color={it.doneToday ? '#fff' : COLORS.primary} />
                   </View>
                   <View className="flex-1">
-                    <Text className={`text-on-surface font-semibold ${it.doneToday ? 'line-through text-on-surface-variant' : ''}`}>{it.title}</Text>
-                    <Text className="text-on-surface-variant text-xs mt-0.5">{it.planned_time || '全天'} · +{it.points || 10}积分</Text>
+                    <Text className={`text-ink font-semibold ${it.doneToday ? 'line-through text-ink-mute' : ''}`}>{it.title}</Text>
+                    <Text className="text-ink-mute text-xs mt-0.5">{it.planned_time || '全天'} · +{it.points || 10}积分</Text>
                   </View>
                   {!it.doneToday && (
                     <TouchableOpacity className="bg-primary px-4 py-2 rounded-full" onPress={() => { setCurrent(it); setCkOpen(true); }}>
@@ -174,7 +174,7 @@ export default function GoalDetailScreen() {
             </View>
 
             {/* 打卡记录 */}
-            <Text className="text-on-surface font-bold mb-3">打卡记录</Text>
+            <Text className="text-ink font-bold mb-3">打卡记录</Text>
             {checkins.length ? (
               <View className="gap-3 mb-6">
                 {checkins.map((c) => (
@@ -190,8 +190,8 @@ export default function GoalDetailScreen() {
                         <View className="w-14 h-14 rounded-2xl bg-surface-container items-center justify-center"><MaterialCommunityIcons name="image-outline" size={20} color={COLORS.onSurfaceVariant} /></View>
                       )}
                       <View className="flex-1">
-                        <Text className="text-on-surface font-semibold">{c.title}</Text>
-                        <Text className="text-on-surface-variant text-xs mt-0.5">{c.user_id === String(user?.id) ? '我' : '监督同伴'} · {new Date(c.checkin_date).toLocaleDateString()}</Text>
+                        <Text className="text-ink font-semibold">{c.title}</Text>
+                        <Text className="text-ink-mute text-xs mt-0.5">{c.user_id === String(user?.id) ? '我' : '监督同伴'} · {new Date(c.checkin_date).toLocaleDateString()}</Text>
                       </View>
                       <View className="bg-primary-container px-3 py-1 rounded-full"><Text className="text-primary text-xs font-bold">+{c.points || 0}</Text></View>
                     </View>
@@ -200,14 +200,14 @@ export default function GoalDetailScreen() {
                       <View className="mt-3 gap-2">
                         {comments.filter((cm) => cm.checkin_id === c.id).map((cm) => (
                           <View key={cm.id} className="bg-surface-container rounded-2xl px-3 py-2">
-                            <Text className="text-on-surface-variant text-xs">暖暖的拍拍</Text>
-                            <Text className="text-on-surface text-sm mt-0.5">{cm.content}</Text>
+                            <Text className="text-ink-mute text-xs">暖暖的拍拍</Text>
+                            <Text className="text-ink text-sm mt-0.5">{cm.content}</Text>
                           </View>
                         ))}
                       </View>
                     )}
                     <View className="flex-row items-center gap-2 mt-3">
-                      <TextInput value={commentInput} onChangeText={setCommentInput} placeholder="给同伴留句话鼓励一下…" placeholderTextColor="#A99F92" className="flex-1 bg-surface-container rounded-full px-4 py-2 text-on-surface text-sm" selectionColor={COLORS.primary} />
+                      <TextInput value={commentInput} onChangeText={setCommentInput} placeholder="给同伴留句话鼓励一下…" placeholderTextColor="#A99F92" className="flex-1 bg-surface-container rounded-full px-4 py-2 text-ink text-sm" selectionColor={COLORS.primary} />
                       <TouchableOpacity className="w-9 h-9 rounded-full bg-primary items-center justify-center" onPress={() => sendComment(c.id)}><MaterialCommunityIcons name="send" size={16} color="#fff" /></TouchableOpacity>
                     </View>
                   </View>
@@ -216,23 +216,23 @@ export default function GoalDetailScreen() {
             ) : (
               <View className="bg-surface rounded-3xl p-6 items-center mb-6 border border-dashed border-outline-variant">
                 <MaterialCommunityIcons name="calendar-blank" size={32} color={COLORS.onSurfaceVariant} />
-                <Text className="text-on-surface-variant mt-2">还没有打卡记录，开始第一天的坚持吧</Text>
+                <Text className="text-ink-mute mt-2">还没有打卡记录，开始第一天的坚持吧</Text>
               </View>
             )}
 
             {/* 监督团 */}
-            <Text className="text-on-surface font-bold mb-3">监督团（{members.length} 位好友）</Text>
+            <Text className="text-ink font-bold mb-3">监督团（{members.length} 位好友）</Text>
             <View className="bg-surface rounded-3xl p-4 shadow-card border border-outline-variant mb-6">
               <View className="flex-row gap-3">
                 {members.map((m) => (
                   <View key={m.id} className="items-center gap-1">
                     <View className="w-12 h-12 rounded-full bg-primary-container items-center justify-center"><Text className="text-primary font-bold">{(m.avatar_text || m.nickname?.[0] || '友')}</Text></View>
-                    <Text className="text-xs text-on-surface-variant">{m.nickname}</Text>
-                    <Text className="text-[10px] text-primary">{memberStats[m.id] ? '今日已打卡' : '今日未打卡'}</Text>
+                    <Text className="text-xs text-ink-mute">{m.nickname}</Text>
+                    <Text className="text-[11px] text-primary">{memberStats[m.id] ? '今日已打卡' : '今日未打卡'}</Text>
                   </View>
                 ))}
               </View>
-              <Text className="text-on-surface-variant text-xs mt-3">好友之间可以看到本目标的所有完成情况，互相监督鼓励一起努力。</Text>
+              <Text className="text-ink-mute text-xs mt-3">好友之间可以看到本目标的所有完成情况，互相监督鼓励一起努力。</Text>
             </View>
           </>
         )}
@@ -243,22 +243,22 @@ export default function GoalDetailScreen() {
       <Modal visible={ckOpen} transparent animationType="fade" onRequestClose={() => setCkOpen(false)}>
         <TouchableOpacity className="flex-1 bg-black/30 items-center justify-center" onPress={() => setCkOpen(false)}>
           <View className="bg-surface rounded-3xl w-4/5 p-5" style={{ backgroundColor: COLORS.surface }}>
-                    <Text className="text-on-surface font-bold text-center mb-4">上传《{current?.title}》打卡凭证</Text>
+                    <Text className="text-ink font-bold text-center mb-4">上传《{current?.title}》打卡凭证</Text>
             <PrimaryButton title="拍照打卡" onPress={() => current && takePhoto(current)} loading={uploading} />
             <View className="h-3" />
             <PrimaryButton title="从相册选择照片" onPress={() => current && pickProof(current)} loading={uploading} style={{ backgroundColor: COLORS.secondary }} />
             <View className="h-3" />
             <TouchableOpacity className="h-12 rounded-2xl border border-outline-variant items-center justify-center flex-row gap-2" onPress={recordVideo} disabled={uploading}>
               <MaterialCommunityIcons name="video-outline" size={18} color={COLORS.primary} />
-              <Text className="text-on-surface text-sm font-semibold">拍一段视频凭证</Text>
+              <Text className="text-ink text-sm font-semibold">拍一段视频凭证</Text>
             </TouchableOpacity>
             <View className="h-2" />
             <TouchableOpacity className="h-12 rounded-2xl border border-outline-variant items-center justify-center flex-row gap-2" onPress={pickVideo} disabled={uploading}>
               <MaterialCommunityIcons name="filmstrip" size={18} color={COLORS.secondary} />
-              <Text className="text-on-surface text-sm font-semibold">从相册选视频</Text>
+              <Text className="text-ink text-sm font-semibold">从相册选视频</Text>
             </TouchableOpacity>
             <View className="h-3" />
-            <TouchableOpacity className="h-12 items-center justify-center" onPress={() => setCkOpen(false)}><Text className="text-on-surface-variant">取消</Text></TouchableOpacity>
+            <TouchableOpacity className="h-12 items-center justify-center" onPress={() => setCkOpen(false)}><Text className="text-ink-mute">取消</Text></TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -267,14 +267,14 @@ export default function GoalDetailScreen() {
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <TouchableOpacity className="flex-1 bg-black/30 items-center justify-center" onPress={() => setMenuOpen(false)}>
           <View className="bg-surface rounded-3xl w-4/5 p-5">
-            <Text className="text-on-surface font-bold text-center mb-3">目标管理</Text>
+            <Text className="text-ink font-bold text-center mb-3">目标管理</Text>
             <TouchableOpacity className="bg-primary-container rounded-2xl py-3 items-center mb-2" onPress={async () => { await apiPost(`/api/v1/goals/${id}/pause`, {}); setMenuOpen(false); load(); }}>
-              <MaterialCommunityIcons name="pause-circle-outline" size={20} color={COLORS.primary} /><Text className="text-on-surface font-semibold mt-1">暂停目标（暖暖会轻声提醒哦）</Text>
+              <MaterialCommunityIcons name="pause-circle-outline" size={20} color={COLORS.primary} /><Text className="text-ink font-semibold mt-1">暂停目标（暖暖会轻声提醒哦）</Text>
             </TouchableOpacity>
             <TouchableOpacity className="bg-surface-container rounded-2xl py-3 items-center" onPress={async () => { await apiPost(`/api/v1/goals/${id}/reset`, {}); setMenuOpen(false); load(); }}>
-              <MaterialCommunityIcons name="restart" size={20} color={COLORS.primary} /><Text className="text-on-surface font-semibold mt-1">重新开始目标</Text>
+              <MaterialCommunityIcons name="restart" size={20} color={COLORS.primary} /><Text className="text-ink font-semibold mt-1">重新开始目标</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="py-3 items-center mt-2" onPress={() => setMenuOpen(false)}><Text className="text-on-surface-variant">取消</Text></TouchableOpacity>
+            <TouchableOpacity className="py-3 items-center mt-2" onPress={() => setMenuOpen(false)}><Text className="text-ink-mute">取消</Text></TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>

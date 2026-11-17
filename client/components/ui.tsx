@@ -28,7 +28,7 @@ export function PageHeader({ title, right, onBack }: { title: string; right?: Re
       >
         <MaterialCommunityIcons name="arrow-left" size={22} color={COLORS.onSurface} />
       </TouchableOpacity>
-      <Text className="text-lg font-bold text-on-surface">{title}</Text>
+      <Text className="text-lg font-bold text-ink">{title}</Text>
       <View className="w-11 h-11 items-center justify-center">{right}</View>
     </View>
   );
@@ -54,7 +54,7 @@ export function GhostButton({ title, onPress, style }: { title: string; onPress:
       className="h-12 rounded-3xl items-center justify-center border border-outline-variant px-5"
       style={[{ backgroundColor: COLORS.surface }, style]}
     >
-      <Text className="text-on-surface text-sm font-semibold">{title}</Text>
+      <Text className="text-ink text-sm font-semibold">{title}</Text>
     </TouchableOpacity>
   );
 }
@@ -70,16 +70,16 @@ export function Field({ value, onChangeText, placeholder, multiline, keyboardTyp
         placeholderTextColor="#A99F92"
         multiline={multiline}
         keyboardType={keyboardType}
-        className="flex-1 text-on-surface text-base"
+        className="flex-1 text-ink text-base"
         selectionColor={COLORS.primary}
       />
-      {suffix ? <Text className="text-on-surface-variant ml-2">{suffix}</Text> : null}
+      {suffix ? <Text className="text-ink-mute ml-2">{suffix}</Text> : null}
     </View>
   );
 }
 
 export function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <Text className="text-on-surface text-base font-bold mb-3">{children}</Text>;
+  return <Text className="text-ink text-base font-bold mb-3">{children}</Text>;
 }
 
 export function Chip({ label, selected, onPress }: { label: string; selected?: boolean; onPress?: () => void }) {
@@ -88,7 +88,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
       onPress={onPress}
       className={`px-4 py-2 rounded-full border ${selected ? 'border-primary bg-primary-container' : 'border-outline-variant bg-surface'}`}
     >
-      <Text className={`text-sm font-medium ${selected ? 'text-on-surface' : 'text-on-surface-variant'}`}>{label}</Text>
+      <Text className={`text-sm font-medium ${selected ? 'text-ink' : 'text-ink-mute'}`}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -105,7 +105,7 @@ export function Loading() {
   return (
     <View className="flex-1 items-center justify-center">
       <ActivityIndicator size="large" color={COLORS.primary} />
-      <Text className="text-on-surface-variant mt-3">暖暖正在准备中…</Text>
+      <Text className="text-ink-mute mt-3">暖暖正在准备中…</Text>
     </View>
   );
 }

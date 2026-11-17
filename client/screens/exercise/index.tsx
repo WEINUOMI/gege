@@ -146,12 +146,12 @@ export default function ExerciseScreen() {
         <View className="bg-surface rounded-3xl p-5 mt-4 border border-outline-variant shadow-card">
           <View className="flex-row items-center justify-between">
             <View>
-              <Text className="text-on-surface-variant text-xs">今日消耗</Text>
-              <Text className="text-primary text-3xl font-bold mt-1">{today.workoutCalories || 0}<Text className="text-base font-normal text-on-surface-variant"> kcal</Text></Text>
+              <Text className="text-ink-mute text-xs">今日消耗</Text>
+              <Text className="text-primary text-3xl font-bold mt-1">{today.workoutCalories || 0}<Text className="text-base font-normal text-ink-mute"> kcal</Text></Text>
             </View>
             <View className="items-end">
-              <Text className="text-on-surface-variant text-xs">运动时长</Text>
-              <Text className="text-on-surface text-xl font-bold mt-1">{today.workoutMinutes || 0} 分钟</Text>
+              <Text className="text-ink-mute text-xs">运动时长</Text>
+              <Text className="text-ink text-xl font-bold mt-1">{today.workoutMinutes || 0} 分钟</Text>
             </View>
           </View>
           {(today.exercise || []).length > 0 && (
@@ -159,8 +159,8 @@ export default function ExerciseScreen() {
               {(today.exercise || []).slice(0, 3).map((r: any) => (
                 <View key={r.id} className="flex-row items-center gap-2 py-1">
                   <MaterialCommunityIcons name="check-circle" size={14} color={COLORS.primary} />
-                  <Text className="flex-1 text-on-surface text-xs" numberOfLines={1}>{r.title}</Text>
-                  <Text className="text-on-surface-variant text-[10px]">{new Date(r.checkin_date).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</Text>
+                  <Text className="flex-1 text-ink text-xs" numberOfLines={1}>{r.title}</Text>
+                  <Text className="text-ink-mute text-[11px]">{new Date(r.checkin_date).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</Text>
                 </View>
               ))}
             </View>
@@ -169,21 +169,21 @@ export default function ExerciseScreen() {
 
         {!!note && (
           <View className="bg-primary-container rounded-2xl px-4 py-3 mt-3">
-            <Text className="text-on-surface text-xs leading-5">{note}</Text>
+            <Text className="text-ink text-xs leading-5">{note}</Text>
             {conditions.length > 0 && (
-              <Text className="text-on-surface-variant text-[10px] mt-1">已避开与「{conditions.join('、')}」冲突的动作</Text>
+              <Text className="text-ink-mute text-[11px] mt-1">已避开与「{conditions.join('、')}」冲突的动作</Text>
             )}
           </View>
         )}
 
         {/* 筛选 */}
-        <Text className="text-on-surface font-bold mt-5 mb-2">想练哪里？</Text>
+        <Text className="text-ink font-bold mt-5 mb-2">想练哪里？</Text>
         <View className="flex-row flex-wrap gap-2">
           <TouchableOpacity
             className={`px-3.5 py-2 rounded-full border ${part === '' ? 'bg-primary-container border-primary' : 'bg-surface border-outline-variant'}`}
             onPress={() => setPart('')}
           >
-            <Text className="text-on-surface text-xs">都可以</Text>
+            <Text className="text-ink text-xs">都可以</Text>
           </TouchableOpacity>
           {PARTS.map((p) => (
             <TouchableOpacity
@@ -191,12 +191,12 @@ export default function ExerciseScreen() {
               className={`px-3.5 py-2 rounded-full border ${part === p ? 'bg-primary-container border-primary' : 'bg-surface border-outline-variant'}`}
               onPress={() => setPart(part === p ? '' : p)}
             >
-              <Text className="text-on-surface text-xs">{p}</Text>
+              <Text className="text-ink text-xs">{p}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text className="text-on-surface font-bold mt-4 mb-2">有多少时间？</Text>
+        <Text className="text-ink font-bold mt-4 mb-2">有多少时间？</Text>
         <View className="flex-row gap-2">
           {DURATIONS.map((d) => (
             <TouchableOpacity
@@ -204,7 +204,7 @@ export default function ExerciseScreen() {
               className={`flex-1 py-2 rounded-full border items-center ${maxMin === d.value ? 'bg-primary-container border-primary' : 'bg-surface border-outline-variant'}`}
               onPress={() => setMaxMin(d.value)}
             >
-              <Text className="text-on-surface text-xs">{d.label}</Text>
+              <Text className="text-ink text-xs">{d.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -216,7 +216,7 @@ export default function ExerciseScreen() {
         {/* 运动卡片 */}
         <View className="mt-6">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-on-surface font-bold">建议今天练这些</Text>
+            <Text className="text-ink font-bold">建议今天练这些</Text>
             {list.length > 0 && (
               <TouchableOpacity className="flex-row items-center gap-1" onPress={() => fetchList(offset + 3, false, part, maxMin)}>
                 <MaterialCommunityIcons name="refresh" size={15} color={COLORS.primary} />
@@ -237,26 +237,26 @@ export default function ExerciseScreen() {
                     </View>
                     <View className="flex-1">
                       <View className="flex-row items-center gap-2">
-                        <Text className="text-on-surface font-bold">{w.name}</Text>
+                        <Text className="text-ink font-bold">{w.name}</Text>
                         <View className="bg-surface-container px-2 py-0.5 rounded-full">
-                          <Text className="text-[10px] text-on-surface-variant">强度 {w.intensity}</Text>
+                          <Text className="text-[11px] text-ink-mute">强度 {w.intensity}</Text>
                         </View>
                       </View>
                       <Text className="text-primary text-xs mt-1">
                         {w.minutes} 分钟 · 约消耗 {kcal(w.met, w.minutes)} kcal · MET {w.met}
                       </Text>
-                      <Text className="text-on-surface-variant text-[10px] mt-0.5">{w.parts.join(' / ')}</Text>
+                      <Text className="text-ink-mute text-[11px] mt-0.5">{w.parts.join(' / ')}</Text>
                     </View>
                   </View>
 
                   <View className="bg-surface-container rounded-2xl px-3 py-2 mt-3">
-                    <Text className="text-on-surface-variant text-[11px] leading-4">💡 {w.reason}</Text>
+                    <Text className="text-ink-mute text-[11px] leading-4">💡 {w.reason}</Text>
                   </View>
 
                   <View className="flex-row gap-2 mt-3">
                     <TouchableOpacity className="flex-1 h-10 rounded-2xl bg-surface-container items-center justify-center flex-row gap-1" onPress={() => setDetail(w)}>
                       <MaterialCommunityIcons name="information-outline" size={14} color={COLORS.onSurface} />
-                      <Text className="text-on-surface text-xs font-semibold">怎么做</Text>
+                      <Text className="text-ink text-xs font-semibold">怎么做</Text>
                     </TouchableOpacity>
                     <TouchableOpacity className="h-10 px-3 rounded-2xl bg-surface-container items-center justify-center flex-row gap-1" onPress={() => openVideo(w)}>
                       <MaterialCommunityIcons name="play-circle-outline" size={14} color={COLORS.secondary} />
@@ -273,7 +273,7 @@ export default function ExerciseScreen() {
 
           {list.length > 0 && list.length % 3 === 0 && (
             <TouchableOpacity className="mt-3 h-12 rounded-2xl border border-outline-variant items-center justify-center" onPress={() => fetchList(offset + 3, true, part, maxMin)}>
-              <Text className="text-on-surface-variant text-sm">{loading ? '加载中…' : '加载更多'}</Text>
+              <Text className="text-ink-mute text-sm">{loading ? '加载中…' : '加载更多'}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -296,29 +296,29 @@ export default function ExerciseScreen() {
                   <View className="flex-row items-center gap-3">
                     <Text style={{ fontSize: 28 }}>{detail.emoji}</Text>
                     <View className="flex-1">
-                      <Text className="text-on-surface text-lg font-bold">{detail.name}</Text>
-                      <Text className="text-on-surface-variant text-xs mt-0.5">{detail.minutes} 分钟 · 强度 {detail.intensity} · 约 {kcal(detail.met, detail.minutes)} kcal</Text>
+                      <Text className="text-ink text-lg font-bold">{detail.name}</Text>
+                      <Text className="text-ink-mute text-xs mt-0.5">{detail.minutes} 分钟 · 强度 {detail.intensity} · 约 {kcal(detail.met, detail.minutes)} kcal</Text>
                     </View>
                     <TouchableOpacity className="w-9 h-9 rounded-full bg-surface-container items-center justify-center" onPress={() => setDetail(null)}>
                       <MaterialCommunityIcons name="close" size={18} color={COLORS.onSurface} />
                     </TouchableOpacity>
                   </View>
 
-                  <Text className="text-on-surface font-bold mt-5 mb-2">动作要点</Text>
+                  <Text className="text-ink font-bold mt-5 mb-2">动作要点</Text>
                   {detail.howTo.map((h, i) => (
                     <View key={i} className="flex-row gap-2 mb-2">
                       <View className="w-5 h-5 rounded-full bg-primary items-center justify-center mt-0.5">
-                        <Text className="text-white text-[10px] font-bold">{i + 1}</Text>
+                        <Text className="text-white text-[11px] font-bold">{i + 1}</Text>
                       </View>
-                      <Text className="flex-1 text-on-surface text-sm leading-5">{h}</Text>
+                      <Text className="flex-1 text-ink text-sm leading-5">{h}</Text>
                     </View>
                   ))}
 
                   {detail.cautions.length > 0 && (
                     <>
-                      <Text className="text-on-surface font-bold mt-4 mb-2">注意</Text>
+                      <Text className="text-ink font-bold mt-4 mb-2">注意</Text>
                       {detail.cautions.map((c, i) => (
-                        <Text key={i} className="text-on-surface-variant text-xs leading-5">· {c}</Text>
+                        <Text key={i} className="text-ink-mute text-xs leading-5">· {c}</Text>
                       ))}
                     </>
                   )}
@@ -341,15 +341,15 @@ export default function ExerciseScreen() {
       <Modal visible={!!picking} transparent animationType="fade" onRequestClose={() => setPicking(null)}>
         <View className="flex-1 bg-black/30 items-center justify-center px-6">
           <View className="bg-surface rounded-3xl w-full p-5" style={{ backgroundColor: COLORS.surface }}>
-            <Text className="text-on-surface font-bold text-center">{picking?.name}</Text>
-            <Text className="text-on-surface-variant text-xs text-center mt-1">按体重 {weight}kg 估算</Text>
+            <Text className="text-ink font-bold text-center">{picking?.name}</Text>
+            <Text className="text-ink-mute text-xs text-center mt-1">按体重 {weight}kg 估算</Text>
 
             <View className="flex-row items-center justify-center gap-5 mt-4">
               <TouchableOpacity className="w-10 h-10 rounded-full bg-surface-container items-center justify-center" onPress={() => setMinutes((m) => Math.max(5, m - 5))}>
                 <MaterialCommunityIcons name="minus" size={18} color={COLORS.onSurface} />
               </TouchableOpacity>
               <View className="items-center">
-                <Text className="text-on-surface text-2xl font-bold">{minutes}<Text className="text-sm font-normal text-on-surface-variant"> 分钟</Text></Text>
+                <Text className="text-ink text-2xl font-bold">{minutes}<Text className="text-sm font-normal text-ink-mute"> 分钟</Text></Text>
                 <Text className="text-primary text-xs mt-1">约消耗 {picking ? kcal(picking.met, minutes) : 0} kcal</Text>
               </View>
               <TouchableOpacity className="w-10 h-10 rounded-full bg-surface-container items-center justify-center" onPress={() => setMinutes((m) => Math.min(180, m + 5))}>
@@ -361,14 +361,14 @@ export default function ExerciseScreen() {
             <PrimaryButton title="拍照上传运动凭证" onPress={() => pickPhoto(true)} loading={uploading} />
             <View className="h-2" />
             <TouchableOpacity className="h-12 rounded-2xl bg-surface-container items-center justify-center" onPress={() => pickPhoto(false)} disabled={uploading}>
-              <Text className="text-on-surface text-sm font-semibold">从相册选一张</Text>
+              <Text className="text-ink text-sm font-semibold">从相册选一张</Text>
             </TouchableOpacity>
             <View className="h-2" />
             <TouchableOpacity className="h-11 items-center justify-center" onPress={() => submit()} disabled={uploading}>
-              <Text className="text-on-surface-variant text-sm">没有照片，先记上</Text>
+              <Text className="text-ink-mute text-sm">没有照片，先记上</Text>
             </TouchableOpacity>
             <TouchableOpacity className="h-10 items-center justify-center" onPress={() => setPicking(null)}>
-              <Text className="text-on-surface-variant text-xs">取消</Text>
+              <Text className="text-ink-mute text-xs">取消</Text>
             </TouchableOpacity>
           </View>
         </View>

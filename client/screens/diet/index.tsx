@@ -150,26 +150,26 @@ export default function DietScreen() {
         {/* 今日摄入 */}
         <View className="flex-row gap-3 mt-4">
           <View className="flex-1 bg-surface rounded-3xl p-4 border border-outline-variant shadow-card">
-            <Text className="text-on-surface-variant text-xs">今日已记录</Text>
-            <Text className="text-primary text-2xl font-bold mt-1">{today.dietCalories || 0}<Text className="text-sm font-normal text-on-surface-variant"> kcal</Text></Text>
-            <Text className="text-on-surface-variant text-[11px] mt-1">{(today.diet || []).length} 条记录</Text>
+            <Text className="text-ink-mute text-xs">今日已记录</Text>
+            <Text className="text-primary text-2xl font-bold mt-1">{today.dietCalories || 0}<Text className="text-sm font-normal text-ink-mute"> kcal</Text></Text>
+            <Text className="text-ink-mute text-[11px] mt-1">{(today.diet || []).length} 条记录</Text>
           </View>
           <View className="flex-1 bg-surface rounded-3xl p-4 border border-outline-variant shadow-card">
-            <Text className="text-on-surface-variant text-xs">今日运动消耗</Text>
-            <Text className="text-secondary text-2xl font-bold mt-1">{today.workoutCalories || 0}<Text className="text-sm font-normal text-on-surface-variant"> kcal</Text></Text>
-            <Text className="text-on-surface-variant text-[11px] mt-1">{today.workoutMinutes || 0} 分钟</Text>
+            <Text className="text-ink-mute text-xs">今日运动消耗</Text>
+            <Text className="text-secondary text-2xl font-bold mt-1">{today.workoutCalories || 0}<Text className="text-sm font-normal text-ink-mute"> kcal</Text></Text>
+            <Text className="text-ink-mute text-[11px] mt-1">{today.workoutMinutes || 0} 分钟</Text>
           </View>
         </View>
 
         {/* 个性化说明 */}
         {!!note && (
           <View className="bg-primary-container rounded-2xl px-4 py-3 mt-3">
-            <Text className="text-on-surface text-xs leading-5">{note}</Text>
+            <Text className="text-ink text-xs leading-5">{note}</Text>
             {conditions.length > 0 && (
               <View className="flex-row flex-wrap gap-1.5 mt-2">
                 {conditions.map((c) => (
                   <View key={c} className="bg-white/70 px-2 py-0.5 rounded-full">
-                    <Text className="text-[10px] text-on-surface-variant">已按「{c}」筛选</Text>
+                    <Text className="text-[11px] text-ink-mute">已按「{c}」筛选</Text>
                   </View>
                 ))}
               </View>
@@ -180,8 +180,8 @@ export default function DietScreen() {
         {/* 冰箱食材 */}
         <View className="mt-5">
           <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-on-surface font-bold">冰箱里有什么？</Text>
-            <Text className="text-on-surface-variant text-xs">可不填，直接推荐</Text>
+            <Text className="text-ink font-bold">冰箱里有什么？</Text>
+            <Text className="text-ink-mute text-xs">可不填，直接推荐</Text>
           </View>
           <View className="flex-row items-center gap-2">
             <View className="flex-1 flex-row items-center bg-surface rounded-2xl px-3 border border-outline-variant">
@@ -191,7 +191,7 @@ export default function DietScreen() {
                 onChangeText={setInput}
                 placeholder="输入食材，如 鸡胸肉"
                 placeholderTextColor="#A99F92"
-                className="flex-1 ml-2 py-3 text-on-surface"
+                className="flex-1 ml-2 py-3 text-ink"
                 selectionColor={COLORS.primary}
                 onSubmitEditing={() => addIngredient(input)}
                 returnKeyType="done"
@@ -206,7 +206,7 @@ export default function DietScreen() {
             <View className="flex-row flex-wrap gap-2 mt-3">
               {ingredients.map((v) => (
                 <TouchableOpacity key={v} className="flex-row items-center gap-1 bg-primary-container px-3 py-1.5 rounded-full" onPress={() => removeIngredient(v)}>
-                  <Text className="text-on-surface text-xs">{v}</Text>
+                  <Text className="text-ink text-xs">{v}</Text>
                   <MaterialCommunityIcons name="close" size={13} color={COLORS.onSurfaceVariant} />
                 </TouchableOpacity>
               ))}
@@ -216,7 +216,7 @@ export default function DietScreen() {
           <View className="flex-row flex-wrap gap-1.5 mt-3">
             {QUICK_INGREDIENTS.filter((q) => !ingredients.includes(q)).slice(0, 8).map((q) => (
               <TouchableOpacity key={q} className="px-2.5 py-1 rounded-full bg-surface border border-outline-variant" onPress={() => addIngredient(q)}>
-                <Text className="text-on-surface-variant text-[11px]">{q}</Text>
+                <Text className="text-ink-mute text-[11px]">{q}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -234,7 +234,7 @@ export default function DietScreen() {
         {/* 菜谱卡 */}
         <View className="mt-6">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-on-surface font-bold">今日推荐</Text>
+            <Text className="text-ink font-bold">今日推荐</Text>
             {recipes.length > 0 && (
               <TouchableOpacity onPress={() => fetchRecipes(offset + 3, ingredients, false)} className="flex-row items-center gap-1">
                 <MaterialCommunityIcons name="refresh" size={15} color={COLORS.secondary} />
@@ -248,7 +248,7 @@ export default function DietScreen() {
           ) : recipes.length === 0 ? (
             <View className="bg-surface rounded-3xl p-6 items-center border border-dashed border-outline-variant">
               <MaterialCommunityIcons name="food-apple-outline" size={30} color={COLORS.onSurfaceVariant} />
-              <Text className="text-on-surface-variant mt-2 text-center text-sm">还没有菜谱{'\n'}点上面的按钮，暖暖马上给你配</Text>
+              <Text className="text-ink-mute mt-2 text-center text-sm">还没有菜谱{'\n'}点上面的按钮，暖暖马上给你配</Text>
             </View>
           ) : (
             <View className="gap-3">
@@ -260,9 +260,9 @@ export default function DietScreen() {
                     </View>
                     <View className="flex-1">
                       <View className="flex-row items-center gap-2">
-                        <Text className="text-on-surface font-bold flex-shrink">{r.name}</Text>
+                        <Text className="text-ink font-bold flex-shrink">{r.name}</Text>
                         <View className="bg-surface-container px-2 py-0.5 rounded-full">
-                          <Text className="text-[10px] text-on-surface-variant">{r.minutes} 分钟</Text>
+                          <Text className="text-[11px] text-ink-mute">{r.minutes} 分钟</Text>
                         </View>
                       </View>
                       <Text className="text-secondary text-xs mt-1">{r.calories} kcal · 蛋白 {r.protein}g · 碳水 {r.carb}g · 脂肪 {r.fat}g</Text>
@@ -272,18 +272,18 @@ export default function DietScreen() {
                   <View className="flex-row flex-wrap gap-1.5 mt-3">
                     {r.tags.slice(0, 3).map((t) => (
                       <View key={t} className="bg-primary-container px-2 py-0.5 rounded-full">
-                        <Text className="text-[10px] text-on-surface">{t}</Text>
+                        <Text className="text-[11px] text-ink">{t}</Text>
                       </View>
                     ))}
                   </View>
 
                   <View className="bg-surface-container rounded-2xl px-3 py-2 mt-3">
-                    <Text className="text-on-surface-variant text-[11px] leading-4">💡 {r.reason}</Text>
+                    <Text className="text-ink-mute text-[11px] leading-4">💡 {r.reason}</Text>
                   </View>
 
                   <View className="flex-row gap-2 mt-3">
                     <TouchableOpacity className="flex-1 h-10 rounded-2xl bg-surface-container items-center justify-center" onPress={() => setDetail(r)}>
-                      <Text className="text-on-surface text-xs font-semibold">看做法</Text>
+                      <Text className="text-ink text-xs font-semibold">看做法</Text>
                     </TouchableOpacity>
                     <TouchableOpacity className="flex-1 h-10 rounded-2xl bg-primary items-center justify-center" onPress={() => { setMeal(guessMeal()); setPicking(r); }}>
                       <Text className="text-white text-xs font-bold">我吃了这道</Text>
@@ -296,7 +296,7 @@ export default function DietScreen() {
 
           {recipes.length > 0 && recipes.length % 3 === 0 && (
             <TouchableOpacity className="mt-3 h-12 rounded-2xl border border-outline-variant items-center justify-center" onPress={() => fetchRecipes(offset + 3, ingredients, true)}>
-              <Text className="text-on-surface-variant text-sm">{loading ? '加载中…' : '加载更多菜谱'}</Text>
+              <Text className="text-ink-mute text-sm">{loading ? '加载中…' : '加载更多菜谱'}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -320,41 +320,41 @@ export default function DietScreen() {
                   <View className="flex-row items-center gap-3">
                     <Text style={{ fontSize: 28 }}>{detail.emoji}</Text>
                     <View className="flex-1">
-                      <Text className="text-on-surface text-lg font-bold">{detail.name}</Text>
-                      <Text className="text-on-surface-variant text-xs mt-0.5">{detail.minutes} 分钟 · {detail.difficulty} · {detail.calories} kcal</Text>
+                      <Text className="text-ink text-lg font-bold">{detail.name}</Text>
+                      <Text className="text-ink-mute text-xs mt-0.5">{detail.minutes} 分钟 · {detail.difficulty} · {detail.calories} kcal</Text>
                     </View>
                     <TouchableOpacity onPress={() => setDetail(null)} className="w-9 h-9 rounded-full bg-surface-container items-center justify-center">
                       <MaterialCommunityIcons name="close" size={18} color={COLORS.onSurface} />
                     </TouchableOpacity>
                   </View>
 
-                  <Text className="text-on-surface font-bold mt-5 mb-2">需要这些食材</Text>
+                  <Text className="text-ink font-bold mt-5 mb-2">需要这些食材</Text>
                   <View className="flex-row flex-wrap gap-1.5">
                     {detail.ingredients.map((i) => (
-                      <View key={i} className="bg-surface-container px-2.5 py-1 rounded-full"><Text className="text-on-surface text-xs">{i}</Text></View>
+                      <View key={i} className="bg-surface-container px-2.5 py-1 rounded-full"><Text className="text-ink text-xs">{i}</Text></View>
                     ))}
                   </View>
 
-                  <Text className="text-on-surface font-bold mt-5 mb-2">做法</Text>
+                  <Text className="text-ink font-bold mt-5 mb-2">做法</Text>
                   {detail.steps.map((s, i) => (
                     <View key={i} className="flex-row gap-2 mb-2">
                       <View className="w-5 h-5 rounded-full bg-primary items-center justify-center mt-0.5">
-                        <Text className="text-white text-[10px] font-bold">{i + 1}</Text>
+                        <Text className="text-white text-[11px] font-bold">{i + 1}</Text>
                       </View>
-                      <Text className="flex-1 text-on-surface text-sm leading-5">{s}</Text>
+                      <Text className="flex-1 text-ink text-sm leading-5">{s}</Text>
                     </View>
                   ))}
 
                   {detail.cautions.length > 0 && (
                     <>
-                      <Text className="text-on-surface font-bold mt-4 mb-2">要留意</Text>
+                      <Text className="text-ink font-bold mt-4 mb-2">要留意</Text>
                       {detail.cautions.map((c, i) => (
-                        <Text key={i} className="text-on-surface-variant text-xs leading-5">· {c}</Text>
+                        <Text key={i} className="text-ink-mute text-xs leading-5">· {c}</Text>
                       ))}
                     </>
                   )}
 
-                  <Text className="text-on-surface-variant text-[10px] mt-4 leading-4">出处：{detail.source}</Text>
+                  <Text className="text-ink-mute text-[11px] mt-4 leading-4">出处：{detail.source}</Text>
 
                   <View className="h-4" />
                   <PrimaryButton title="我吃了这道，记一笔" onPress={() => { const d = detail; setDetail(null); setMeal(guessMeal()); setPicking(d); }} />
@@ -369,10 +369,10 @@ export default function DietScreen() {
       <Modal visible={!!picking} transparent animationType="fade" onRequestClose={() => setPicking(null)}>
         <View className="flex-1 bg-black/30 items-center justify-center px-6">
           <View className="bg-surface rounded-3xl w-full p-5" style={{ backgroundColor: COLORS.surface }}>
-            <Text className="text-on-surface font-bold text-center">记录「{picking?.name}」</Text>
-            <Text className="text-on-surface-variant text-xs text-center mt-1">约 {picking?.calories} kcal · +8 积分</Text>
+            <Text className="text-ink font-bold text-center">记录「{picking?.name}」</Text>
+            <Text className="text-ink-mute text-xs text-center mt-1">约 {picking?.calories} kcal · +8 积分</Text>
 
-            <Text className="text-on-surface-variant text-xs mt-4 mb-2">这是哪一餐？</Text>
+            <Text className="text-ink-mute text-xs mt-4 mb-2">这是哪一餐？</Text>
             <View className="flex-row flex-wrap gap-2">
               {MEALS.map((m) => (
                 <TouchableOpacity
@@ -380,7 +380,7 @@ export default function DietScreen() {
                   className={`px-4 py-2 rounded-full border ${meal === m ? 'bg-primary-container border-primary' : 'bg-surface border-outline-variant'}`}
                   onPress={() => setMeal(m)}
                 >
-                  <Text className="text-on-surface text-xs">{m}</Text>
+                  <Text className="text-ink text-xs">{m}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -389,14 +389,14 @@ export default function DietScreen() {
             <PrimaryButton title="拍照留个凭证" onPress={() => pickPhoto(true)} loading={uploading} />
             <View className="h-2" />
             <TouchableOpacity className="h-12 rounded-2xl bg-surface-container items-center justify-center" onPress={() => pickPhoto(false)} disabled={uploading}>
-              <Text className="text-on-surface text-sm font-semibold">从相册选一张</Text>
+              <Text className="text-ink text-sm font-semibold">从相册选一张</Text>
             </TouchableOpacity>
             <View className="h-2" />
             <TouchableOpacity className="h-11 items-center justify-center" onPress={() => saveDiet()} disabled={uploading}>
-              <Text className="text-on-surface-variant text-sm">不拍照，直接记录</Text>
+              <Text className="text-ink-mute text-sm">不拍照，直接记录</Text>
             </TouchableOpacity>
             <TouchableOpacity className="h-10 items-center justify-center" onPress={() => setPicking(null)}>
-              <Text className="text-on-surface-variant text-xs">取消</Text>
+              <Text className="text-ink-mute text-xs">取消</Text>
             </TouchableOpacity>
           </View>
         </View>

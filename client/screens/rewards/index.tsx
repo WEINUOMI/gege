@@ -122,14 +122,14 @@ export default function RewardsScreen() {
           <Text style={{ color: '#fff', opacity: .85 }} className="text-xs mt-1">{level < 6 ? `距离「${levels[level + 1]}」还差 ${Math.max(0, next)} 分` : '已达到最高等级'}</Text>
         </View>
 
-        <Text className="text-on-surface font-bold mb-2">当前称号：<Text className="text-primary">{levels[level]}</Text></Text>
+        <Text className="text-ink font-bold mb-2">当前称号：<Text className="text-primary">{levels[level]}</Text></Text>
 
         {/* 短期结算 */}
-        <Text className="text-on-surface font-bold mt-5 mb-2">短期目标结算</Text>
+        <Text className="text-ink font-bold mt-5 mb-2">短期目标结算</Text>
         {goals.length === 0 ? (
           <View className="bg-surface rounded-3xl p-5 items-center border border-dashed border-outline-variant">
             <MaterialCommunityIcons name="target" size={26} color={COLORS.onSurfaceVariant} />
-            <Text className="text-on-surface-variant text-sm mt-2 text-center">还没有进行中的目标{'\n'}先在「目标设置」里建一个吧</Text>
+            <Text className="text-ink-mute text-sm mt-2 text-center">还没有进行中的目标{'\n'}先在「目标设置」里建一个吧</Text>
           </View>
         ) : (
           <>
@@ -140,7 +140,7 @@ export default function RewardsScreen() {
                   className={`px-3.5 py-2 rounded-full border ${goalId === g.id ? 'bg-primary-container border-primary' : 'bg-surface border-outline-variant'}`}
                   onPress={() => setGoalId(Number(g.id))}
                 >
-                  <Text className="text-on-surface text-xs">{g.title}</Text>
+                  <Text className="text-ink text-xs">{g.title}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -152,7 +152,7 @@ export default function RewardsScreen() {
                   className={`flex-1 py-2 rounded-full border items-center ${period === p.key ? 'bg-primary-container border-primary' : 'bg-surface border-outline-variant'}`}
                   onPress={() => setPeriod(p.key)}
                 >
-                  <Text className="text-on-surface text-[11px]">{p.label}</Text>
+                  <Text className="text-ink text-[11px]">{p.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -163,15 +163,15 @@ export default function RewardsScreen() {
               ) : st ? (
                 <>
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-on-surface-variant text-[11px]">{st.range}</Text>
+                    <Text className="text-ink-mute text-[11px]">{st.range}</Text>
                     <View className="px-2.5 py-0.5 rounded-full" style={{ backgroundColor: verdictStyle.bg }}>
-                      <Text className="text-[10px] font-bold" style={{ color: verdictStyle.fg }}>{st.verdict}</Text>
+                      <Text className="text-[11px] font-bold" style={{ color: verdictStyle.fg }}>{st.verdict}</Text>
                     </View>
                   </View>
 
                   <View className="flex-row items-end gap-2 mt-2">
                     <Text className="text-primary text-3xl font-bold">{st.rate}%</Text>
-                    <Text className="text-on-surface-variant text-xs mb-1.5">完成率 · {st.actual}/{st.expected} 次</Text>
+                    <Text className="text-ink-mute text-xs mb-1.5">完成率 · {st.actual}/{st.expected} 次</Text>
                   </View>
 
                   <View className="h-2.5 rounded-full bg-surface-container mt-2 overflow-hidden">
@@ -180,15 +180,15 @@ export default function RewardsScreen() {
 
                   <View className="flex-row gap-2 mt-3">
                     <View className="flex-1 bg-surface-container rounded-2xl px-3 py-2">
-                      <Text className="text-on-surface-variant text-[10px]">已得积分</Text>
-                      <Text className="text-on-surface font-bold mt-0.5">{st.earnedPoints}</Text>
+                      <Text className="text-ink-mute text-[11px]">已得积分</Text>
+                      <Text className="text-ink font-bold mt-0.5">{st.earnedPoints}</Text>
                     </View>
                     <View className="flex-1 bg-surface-container rounded-2xl px-3 py-2">
-                      <Text className="text-on-surface-variant text-[10px]">漏卡天数</Text>
-                      <Text className="text-on-surface font-bold mt-0.5">{st.missingCount} 天</Text>
+                      <Text className="text-ink-mute text-[11px]">漏卡天数</Text>
+                      <Text className="text-ink font-bold mt-0.5">{st.missingCount} 天</Text>
                     </View>
                     <View className="flex-1 bg-surface-container rounded-2xl px-3 py-2">
-                      <Text className="text-on-surface-variant text-[10px]">本次结算</Text>
+                      <Text className="text-ink-mute text-[11px]">本次结算</Text>
                       <Text className={`font-bold mt-0.5 ${st.bonusPoints > 0 ? 'text-primary' : 'text-[#B06A60]'}`}>
                         {st.bonusPoints > 0 ? `+${st.bonusPoints}` : st.penaltyPoints}
                       </Text>
@@ -198,18 +198,18 @@ export default function RewardsScreen() {
                   {st.suggestReward && (
                     <View className="flex-row items-start gap-2 mt-3 bg-primary-container rounded-2xl px-3 py-2">
                       <MaterialCommunityIcons name="gift-outline" size={16} color={COLORS.primary} />
-                      <Text className="flex-1 text-on-surface text-[11px] leading-4">奖励建议：{st.suggestReward}</Text>
+                      <Text className="flex-1 text-ink text-[11px] leading-4">奖励建议：{st.suggestReward}</Text>
                     </View>
                   )}
                   {st.suggestPunishment && (
                     <View className="flex-row items-start gap-2 mt-2 bg-surface-container rounded-2xl px-3 py-2">
                       <MaterialCommunityIcons name="leaf" size={16} color={COLORS.secondary} />
-                      <Text className="flex-1 text-on-surface text-[11px] leading-4">下次这样改：{st.suggestPunishment}</Text>
+                      <Text className="flex-1 text-ink text-[11px] leading-4">下次这样改：{st.suggestPunishment}</Text>
                     </View>
                   )}
 
                   {st.missingDays.length > 0 && (
-                    <Text className="text-on-surface-variant text-[10px] mt-2 leading-4">
+                    <Text className="text-ink-mute text-[11px] mt-2 leading-4">
                       漏掉的日子：{st.missingDays.slice(-6).map((d) => d.slice(5)).join('、')}{st.missingDays.length > 6 ? ' 等' : ''}
                     </Text>
                   )}
@@ -219,7 +219,7 @@ export default function RewardsScreen() {
                   </TouchableOpacity>
                 </>
               ) : (
-                <Text className="text-on-surface-variant text-xs text-center py-6">这个目标暂时算不出结算数据</Text>
+                <Text className="text-ink-mute text-xs text-center py-6">这个目标暂时算不出结算数据</Text>
               )}
             </View>
           </>
@@ -227,29 +227,29 @@ export default function RewardsScreen() {
 
         {/* 规则 */}
         <View className="bg-surface rounded-3xl p-4 border border-outline-variant mb-4 mt-5">
-          <Text className="text-on-surface font-bold mb-2">奖惩小规则</Text>
-          <View className="flex-row gap-2 items-center mb-1.5"><MaterialCommunityIcons name="check-circle" size={18} color={COLORS.primary} /><Text className="text-on-surface-variant text-sm flex-1">完成一条打卡计划即可得分，运动记录按运动量给分</Text></View>
-          <View className="flex-row gap-2 items-center mb-1.5"><MaterialCommunityIcons name="calendar-remove-outline" size={18} color="#B85C5C" /><Text className="text-on-surface-variant text-sm flex-1">漏打卡按当日可得积分的一半补扣，单周期最多扣 60 分</Text></View>
-          <View className="flex-row gap-2 items-center"><MaterialCommunityIcons name="shield-check-outline" size={18} color={COLORS.secondary} /><Text className="text-on-surface-variant text-sm flex-1">同一周期只结算一次，重复点不会重复扣分</Text></View>
+          <Text className="text-ink font-bold mb-2">奖惩小规则</Text>
+          <View className="flex-row gap-2 items-center mb-1.5"><MaterialCommunityIcons name="check-circle" size={18} color={COLORS.primary} /><Text className="text-ink-mute text-sm flex-1">完成一条打卡计划即可得分，运动记录按运动量给分</Text></View>
+          <View className="flex-row gap-2 items-center mb-1.5"><MaterialCommunityIcons name="calendar-remove-outline" size={18} color="#B85C5C" /><Text className="text-ink-mute text-sm flex-1">漏打卡按当日可得积分的一半补扣，单周期最多扣 60 分</Text></View>
+          <View className="flex-row gap-2 items-center"><MaterialCommunityIcons name="shield-check-outline" size={18} color={COLORS.secondary} /><Text className="text-ink-mute text-sm flex-1">同一周期只结算一次，重复点不会重复扣分</Text></View>
         </View>
 
         {/* 明细 */}
-        <Text className="text-on-surface font-bold mb-3">积分明细</Text>
+        <Text className="text-ink font-bold mb-3">积分明细</Text>
         {data.list.length ? data.list.map((r: any) => (
           <View key={r.id} className="bg-surface rounded-3xl p-4 border border-outline-variant mb-2 flex-row items-center">
             <View className="w-10 h-10 rounded-2xl bg-surface-container items-center justify-center">
               <MaterialCommunityIcons name={r.amount > 0 ? 'star-four-points' : 'alert-circle-outline'} size={20} color={r.amount > 0 ? COLORS.primary : '#B85C5C'} />
             </View>
             <View className="flex-1 ml-3">
-              <Text className="text-on-surface font-medium text-sm" numberOfLines={2}>{r.reason || (r.amount > 0 ? '打卡完成' : '漏打卡惩罚')}</Text>
-              <Text className="text-on-surface-variant text-[10px] mt-0.5">{new Date(r.created_at).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
+              <Text className="text-ink font-medium text-sm" numberOfLines={2}>{r.reason || (r.amount > 0 ? '打卡完成' : '漏打卡惩罚')}</Text>
+              <Text className="text-ink-mute text-[11px] mt-0.5">{new Date(r.created_at).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
             </View>
             <Text className={`text-lg font-bold ${r.amount > 0 ? 'text-primary' : 'text-[#B85C5C]'}`}>{r.amount > 0 ? `+${r.amount}` : r.amount}</Text>
           </View>
         )) : (
           <View className="bg-surface rounded-3xl p-6 items-center border border-dashed border-outline-variant">
             <MaterialCommunityIcons name="star-outline" size={28} color={COLORS.onSurfaceVariant} />
-            <Text className="text-on-surface-variant mt-2 text-sm">还没有积分记录，去完成今日打卡吧</Text>
+            <Text className="text-ink-mute mt-2 text-sm">还没有积分记录，去完成今日打卡吧</Text>
           </View>
         )}
       </ScrollView>
