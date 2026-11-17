@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getSupabaseClient } from "../storage/database/supabase-client";
 import { fileUrl } from "../services/storage";
+import { localToday, todayRange } from "../utils/date";
 
 const router = Router();
 const client = getSupabaseClient();
@@ -58,7 +59,7 @@ router.post("/", async (req, res) => {
         metrics: b.metrics || [],
         target_value: b.targetValue || null,
         target_metric: b.targetMetric || null,
-        start_date: b.startDate || new Date().toISOString().slice(0, 10),
+        start_date: b.startDate || localToday(),
         end_date: b.endDate || null,
         daily_points: b.dailyPoints || 20,
         rewards: b.rewards || [],
@@ -94,7 +95,7 @@ router.get("/", async (req, res) => {
     const { data, error } = await q;
     if (error) throw new Error(error.message);
     const goals = data || [];
-    const today = new Date().toISOString().slice(0, 10);
+    const { start: dayStart, end: dayEnd } = todayRange();
     // 逐个目标统计今日已完成
     const stats: Record<number, { todayDone: number; todayTotal: number }> = {};
     for (const g of goals) {
@@ -105,8 +106,8 @@ router.get("/", async (req, res) => {
             .from("checkins")
             .select("id")
             .eq("goal_id", g.id)
-            .gte("checkin_date", `${today}T00:00:00`)
-            .lte("checkin_date", `${today}T23:59:59`)
+            .gte("checkin_date", dayStart)
+            .lte("checkin_date", dayEnd)
         : { data: [] };
       stats[g.id] = { todayDone: (done || []).length, todayTotal: (planItems || []).length };
     }
@@ -125,7 +126,7 @@ router.get("/:id", async (req, res) => {
     if (error) throw new Error(error.message);
     if (!goal) return res.status(404).json({ error: "目标不存在" });
     const { data: planItems } = await client.from("plan_items").select("*").eq("goal_id", id).order("planned_time");
-    const today = new Date().toISOString().slice(0, 10);
+    const { start: dayStart, end: dayEnd } = todayRange();
     const pi = planItems || [];
     const piIds = pi.map((p: any) => p.id);
     const { data: todayCheckins } = piIds.length
@@ -133,8 +134,8 @@ router.get("/:id", async (req, res) => {
           .from("checkins")
           .select("*")
           .eq("goal_id", id)
-          .gte("checkin_date", `${today}T00:00:00`)
-          .lte("checkin_date", `${today}T23:59:59`)
+          .gte("checkin_date", dayStart)
+          .lte("checkin_date", dayEnd)
       : { data: [] };
     const doneMap: Record<number, boolean> = {};
     (todayCheckins || []).forEach((c: any) => {
@@ -160,8 +161,8 @@ router.get("/:id", async (req, res) => {
         .select("id", { count: "exact", head: true })
         .eq("goal_id", id)
         .eq("user_id", m.id)
-        .gte("checkin_date", `${today}T00:00:00`)
-        .lte("checkin_date", `${today}T23:59:59`);
+        .gte("checkin_date", dayStart)
+        .lte("checkin_date", dayEnd);
       memberStats[m.id] = count || 0;
     }
     // 留言（关联到打卡）
@@ -275,7 +276,7 @@ router.post("/:id/checkins", async (req, res) => {
         title: b.title,
         proof_key: b.proofKey,
         proof_type: b.proofType || "image",
-        points_earned: pointsEarned,
+        points: pointsEarned,
       })
       .select()
       .single();

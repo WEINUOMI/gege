@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getSupabaseClient } from "../storage/database/supabase-client";
 import { fileUrl } from "../services/storage";
+import { todayRange } from "../utils/date";
 
 const router = Router();
 const client = getSupabaseClient();
@@ -99,16 +100,16 @@ router.get("/:userId/goals/:goalId/supervision", async (req, res) => {
     const { data: members } = await client.from("goal_members").select("user_id").eq("goal_id", goalId);
     const memberIds = [...new Set([...(members || []).map((m: any) => m.user_id), userId])];
     const { data: memberUsers } = await client.from("users").select("id,nickname,avatar_text,invite_code").in("id", memberIds);
-    const today = new Date().toISOString().slice(0, 10);
+    const { start: dayStart, end: dayEnd } = todayRange();
     const details = await Promise.all(
       (memberUsers || []).map(async (u: any) => {
         const { data: mine } = await client
           .from("checkins")
-          .select("*, users:user_id(nickname,avatar_text)")
+          .select("*")
           .eq("goal_id", goalId)
           .eq("user_id", u.id)
-          .gte("checkin_date", `${today}T00:00:00`)
-          .lte("checkin_date", `${today}T23:59:59`);
+          .gte("checkin_date", dayStart)
+          .lte("checkin_date", dayEnd);
         const { data: week } = await client
           .from("checkins")
           .select("id")
