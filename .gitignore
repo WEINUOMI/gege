@@ -103,3 +103,6 @@ expo-env.d.ts
 *.tsbuildinfo
 node-compile-cache/
 .codegraph/
+
+# 聊天附件/截图误落入根目录素材夹（运行时素材在 client/assets/，不受影响）
+/assets/
