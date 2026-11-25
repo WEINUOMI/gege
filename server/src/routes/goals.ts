@@ -2,6 +2,8 @@ import { Router } from "express";
 import { getSupabaseClient } from "../storage/database/supabase-client";
 import { fileUrl } from "../services/storage";
 import { localToday, todayRange, dayRange, lastNDays } from "../utils/date";
+import { generatePlan, mealSlot, type PlanItemDraft } from "../services/planBuilder";
+import { loadUserContext } from "../services/planning";
 
 const router = Router();
 const client = getSupabaseClient();
@@ -70,7 +72,27 @@ router.post("/", async (req, res) => {
       .select()
       .single();
     if (error) throw new Error(error.message);
-    const items = b.planItems && b.planItems.length ? b.planItems : defaultPlans(b.category || "weight_loss");
+
+    // 计划生成：未显式传入时，交由知识库+大模型编排（失败自动回退规则编排）
+    let items: any[];
+    let planSource = "client";
+    let planNote = "使用客户端提交的计划";
+    if (b.planItems && b.planItems.length) {
+      items = b.planItems;
+    } else {
+      try {
+        const ctx = await loadUserContext(b.userId);
+        const result = await generatePlan(req, ctx, { title: b.title, category: b.category || "weight_loss", target_value: b.targetValue || null });
+        items = result.items;
+        planSource = result.source;
+        planNote = result.note;
+      } catch (e: any) {
+        items = defaultPlans(b.category || "weight_loss");
+        planSource = "preset";
+        planNote = `计划生成异常（${e?.message || "unknown"}），使用内置模板`;
+      }
+    }
+
     const rows = items.map((p: any) => ({
       goal_id: goal.id,
       title: p.title,
@@ -79,7 +101,66 @@ router.post("/", async (req, res) => {
       points: p.points || 10,
     }));
     await client.from("plan_items").insert(rows);
-    return res.json({ goal });
+    console.log(`[plan] goal=${goal.id} source=${planSource} note=${planNote} items=${rows.length}`);
+    return res.json({ goal, planSource, planNote, planItems: rows.map((r: any) => ({ title: r.title, category: r.category, planned_time: r.planned_time })) });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// 重新编排某个目标的每日计划
+// 接口：POST /api/v1/goals/:id/plan/regenerate
+// 说明：只在"没有被打卡记录引用"的计划项上做替换，已有打卡的条目原样保留，避免历史记录断链
+router.post("/:id/plan/regenerate", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { data: goal } = await client.from("goals").select("*").eq("id", id).maybeSingle();
+    if (!goal) return res.status(404).json({ error: "目标不存在" });
+
+    const ctx = await loadUserContext(goal.user_id);
+    const result = await generatePlan(req, ctx, {
+      title: goal.title,
+      category: goal.category || "habit",
+      target_value: goal.target_value,
+    });
+
+    const { data: existing } = await client.from("plan_items").select("id,category,planned_time,title").eq("goal_id", id);
+    const { data: usedRows } = await client.from("checkins").select("plan_item_id").eq("goal_id", id);
+    const used = new Set((usedRows || []).map((c: any) => c.plan_item_id).filter(Boolean));
+
+    const keep = (existing || []).filter((p: any) => used.has(p.id));
+    const removable = (existing || []).filter((p: any) => !used.has(p.id));
+    if (removable.length) {
+      await client.from("plan_items").delete().in("id", removable.map((p: any) => p.id));
+    }
+
+    // 保留项已占用的餐次，不重复插入
+    const occupied = new Set<string>();
+    for (const p of keep) {
+      const slot = mealSlot(String(p.planned_time || ""));
+      if (slot !== "other") occupied.add(slot);
+    }
+
+    const rows = (result.items as PlanItemDraft[])
+      .filter((p) => {
+        const slot = mealSlot(p.planned_time);
+        if (slot === "other") return true;
+        if (occupied.has(slot)) return false;
+        occupied.add(slot);
+        return true;
+      })
+      .map((p) => ({
+        goal_id: id,
+        title: p.title,
+        category: p.category || "health",
+        planned_time: p.planned_time,
+        points: p.points || 10,
+      }));
+
+    if (rows.length) await client.from("plan_items").insert(rows);
+    console.log(`[plan] regenerate goal=${id} source=${result.source} note=${result.note} added=${rows.length} kept=${keep.length}`);
+
+    return res.json({ planSource: result.source, planNote: result.note, added: rows.length, kept: keep.length });
   } catch (e: any) {
     return res.status(500).json({ error: e.message });
   }

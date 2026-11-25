@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { PageHeader, PrimaryButton, Field, Chip, COLORS } from '@/components/ui';
@@ -64,6 +64,7 @@ export default function GoalSetupScreen() {
       });
       router.replace('/goal-detail', { id: res.goal.id });
     } catch (e: any) {
+      Alert.alert('目标没建成', e?.message || '请检查网络后重试');
     } finally {
       setSaving(false);
     }

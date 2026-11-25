@@ -52,6 +52,10 @@ export interface HealthContext {
   heartRate?: string;
   medicalHistory?: string[];
   goals?: string[];
+  /** 今日打卡计划（时间 + 内容），让对话能引用真实计划而不是泛泛而谈 */
+  todayPlan?: string[];
+  /** 今日完成情况，如 "2/6" */
+  todayProgress?: string;
 }
 
 function ctxText(ctx: HealthContext): string {
@@ -66,7 +70,11 @@ function ctxText(ctx: HealthContext): string {
   if (ctx.heartRate) parts.push(`静息心率${ctx.heartRate}`);
   if (ctx.medicalHistory?.length) parts.push(`过往病史：${ctx.medicalHistory.join("、")}`);
   if (ctx.goals?.length) parts.push(`当前目标：${ctx.goals.join("、")}`);
-  return parts.length ? `【用户身体状况与目标】\n${parts.map((p) => `- ${p}`).join("\n")}\n` : "";
+  let text = parts.length ? `【用户身体状况与目标】\n${parts.map((p) => `- ${p}`).join("\n")}\n` : "";
+  if (ctx.todayPlan?.length) {
+    text += `\n【今日打卡计划】${ctx.todayProgress ? `（已完成 ${ctx.todayProgress}）` : ""}\n${ctx.todayPlan.map((p) => `- ${p}`).join("\n")}\n`;
+  }
+  return text;
 }
 
 const MODEL = "doubao-seed-2-0-pro-260215";

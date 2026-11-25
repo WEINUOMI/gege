@@ -300,6 +300,22 @@ export default function GoalDetailScreen() {
         <TouchableOpacity className="flex-1 bg-black/30 items-center justify-center" onPress={() => setMenuOpen(false)}>
           <View className="bg-surface rounded-3xl w-4/5 p-5">
             <Text className="text-ink font-bold text-center mb-3">目标管理</Text>
+            <TouchableOpacity
+              className="bg-surface-container rounded-2xl py-3 items-center mb-2"
+              onPress={async () => {
+                setMenuOpen(false);
+                try {
+                  const r = await apiPost<any>(`/api/v1/goals/${id}/plan/regenerate`, {});
+                  await load();
+                  Alert.alert('计划已重排', r.planNote || '暖暖已按你的目标和身体状况重新编排');
+                } catch (e: any) {
+                  Alert.alert('重新规划失败', e.message || '请稍后重试');
+                }
+              }}
+            >
+              <MaterialCommunityIcons name="auto-fix" size={20} color={COLORS.primary} />
+              <Text className="text-ink font-semibold mt-1">让暖暖重新规划（含三餐）</Text>
+            </TouchableOpacity>
             <TouchableOpacity className="bg-primary-container rounded-2xl py-3 items-center mb-2" onPress={async () => { await apiPost(`/api/v1/goals/${id}/pause`, {}); setMenuOpen(false); load(); }}>
               <MaterialCommunityIcons name="pause-circle-outline" size={20} color={COLORS.primary} /><Text className="text-ink font-semibold mt-1">暂停目标（暖暖会轻声提醒哦）</Text>
             </TouchableOpacity>

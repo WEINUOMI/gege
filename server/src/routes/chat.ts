@@ -9,9 +9,33 @@ const client = getSupabaseClient();
 
 async function buildContext(userId: string): Promise<HealthContext> {
   const { data: profile } = await client.from("health_profiles").select("*").eq("user_id", userId).maybeSingle();
-  const { data: goals } = await client.from("goals").select("title,status").eq("user_id", userId).eq("status", "active");
+  const { data: goals } = await client.from("goals").select("id,title,status").eq("user_id", userId).eq("status", "active");
   const p: any = profile || {};
   const bp = p.blood_pressure_systolic && p.blood_pressure_diastolic ? `${p.blood_pressure_systolic}/${p.blood_pressure_diastolic}` : "";
+
+  // 把今日计划注入对话上下文，让暖暖能针对真实计划回答，而不是泛泛而谈
+  let todayPlan: string[] = [];
+  let todayProgress = "";
+  const goalIds = (goals || []).map((g: any) => g.id);
+  if (goalIds.length) {
+    const { data: items } = await client
+      .from("plan_items")
+      .select("title,planned_time")
+      .in("goal_id", goalIds)
+      .order("planned_time", { ascending: true });
+    todayPlan = (items || [])
+      .filter((i: any) => i.planned_time)
+      .map((i: any) => `${i.planned_time} ${i.title}`);
+    const { start, end } = todayRange();
+    const { data: cks } = await client
+      .from("checkins")
+      .select("id")
+      .in("goal_id", goalIds)
+      .gte("checkin_date", start)
+      .lte("checkin_date", end);
+    todayProgress = `${(cks || []).length}/${(items || []).length}`;
+  }
+
   return {
     nickname: "主人",
     height: p.height || undefined,
@@ -24,6 +48,8 @@ async function buildContext(userId: string): Promise<HealthContext> {
     heartRate: p.heart_rate || undefined,
     medicalHistory: p.medical_history || [],
     goals: (goals || []).map((g: any) => g.title),
+    todayPlan,
+    todayProgress: todayProgress || undefined,
   };
 }
 
