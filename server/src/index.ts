@@ -7,6 +7,7 @@ import chatRouter from "./routes/chat";
 import recommendRouter from "./routes/recommend";
 import recordsRouter from "./routes/records";
 import uploadRouter from "./routes/upload";
+import mealsRouter from "./routes/meals";
 import { getSupabaseClient } from "./storage/database/supabase-client";
 
 const app = express();
@@ -49,6 +50,7 @@ app.use("/api/v1/chat", chatRouter);
 app.use("/api/v1/recommend", recommendRouter);
 app.use("/api/v1/records", recordsRouter);
 app.use("/api/v1/upload", uploadRouter);
+app.use("/api/v1/meals", mealsRouter);
 
 // 404
 app.use("/api/v1/*", (req, res) => {

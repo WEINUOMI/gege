@@ -8,6 +8,21 @@ import { buildHealthBrief, todayProgressText } from "../services/healthBrief";
 const router = Router();
 const client = getSupabaseClient();
 
+/** 把一餐的分析结果压成一句话，让模型知道用户吃了什么、摄入多少，又不会被 JSON 淹没 */
+function mealSummary(content: string): string {
+  try {
+    const o = JSON.parse(String(content || "{}"));
+    const names = Array.isArray(o.items)
+      ? o.items.map((i: any) => String(i?.name || "")).filter(Boolean).join("、")
+      : "";
+    const kcal = Number(o?.totals?.kcal || 0);
+    if (!names) return "[系统已完成一餐营养分析]";
+    return `[已分析一餐：${names}${kcal ? `，合计约 ${kcal} kcal` : ""}]`;
+  } catch {
+    return "[系统已完成一餐营养分析]";
+  }
+}
+
 async function buildContext(userId: string): Promise<HealthContext> {
   const { data: goals } = await client.from("goals").select("id,title,status").eq("user_id", userId).eq("status", "active");
   const { data: profile } = await client.from("health_profiles").select("*").eq("user_id", userId).maybeSingle();
@@ -155,7 +170,8 @@ router.post("/:userId/ai", async (req, res) => {
       .limit(30);
     // 图片/视频消息的 content 是带签名的对象存储 URL，直接喂给模型会有两个问题：
     // 一是模型看到一长串无意义链接，二是它会把链接当成用户说的话去理解。
-    // 换成占位描述，模型只需知道"用户发了什么"，不需要那个地址。
+    // meal 消息的 content 是分析结果 JSON，更不能原样塞进去。
+    // 这里统一换成模型能读懂的摘要。
     const history = (msgs || []).map((m: any) => ({
       role: m.role,
       content:
@@ -163,7 +179,9 @@ router.post("/:userId/ai", async (req, res) => {
           ? "[用户发送了一张图片]"
           : m.message_type === "video"
             ? "[用户发送了一段视频]"
-            : m.content,
+            : m.message_type === "meal"
+              ? mealSummary(m.content)
+              : m.content,
     }));
     const ctx = await buildContext(userId);
 

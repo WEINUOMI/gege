@@ -13,6 +13,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
 import { apiGet, apiPost, API, uploadProof, uploadProofBase64 } from '@/utils/api';
 import { RichText } from '@/components/RichText';
+import { MealCard } from '@/components/MealCard';
 
 interface Msg { id: number; role: string; content: string; message_type: string; created_at: string; }
 interface Rm { goalId: number; goalTitle: string; id: number; title: string; category: string; time: string; done: boolean; }
@@ -37,6 +38,8 @@ export default function HomeScreen() {
   const [stats, setStats] = useState({ done: 0, total: 0, goals: 0 });
   const [quickOpen, setQuickOpen] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeFail, setAnalyzeFail] = useState('');
   const [pendingOpen, setPendingOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const sseRef = useRef<RNSSE | null>(null);
@@ -199,6 +202,26 @@ export default function HomeScreen() {
         messageType: isVideo ? 'video' : 'image',
       });
       await loadMessages();
+
+      // 图片先显示出来，再去做营养分析：识别 + 点评是两次模型调用，
+      // 慢的时候要十几秒，用户不该对着一个转圈等。
+      setAnalyzeFail('');
+      setAnalyzing(true);
+      try {
+        const analysis: any = await apiPost('/api/v1/meals/analyze', {
+          userId,
+          imageUrl: isVideo ? '' : up.url,
+          videoUrl: isVideo ? up.url : '',
+        });
+        await loadMessages();
+        if (analysis && analysis.ok === false && analysis.note) {
+          setAnalyzeFail(analysis.note);
+        }
+      } catch (err: any) {
+        setAnalyzeFail(String(err?.message || '营养分析暂时不可用').slice(0, 120));
+      } finally {
+        setAnalyzing(false);
+      }
     } catch (e: any) {
       Alert.alert('发送失败', e?.message || '请重试');
     } finally {
@@ -288,35 +311,51 @@ export default function HomeScreen() {
         {/* 消息区 */}
         <ScrollView ref={scrollRef} className="flex-1 px-4 py-3" onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}>
           <View className="gap-3">
-            {messages.map((m) => (
-              <View key={m.id} className={`flex-row ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
-                {m.role !== 'user' && (
-                  <View className="w-8 h-8 rounded-full bg-primary-container items-center justify-center">
-                    <MaterialCommunityIcons name="heart" size={16} color={COLORS.primary} />
+            {messages.map((m) => {
+              // 一餐的营养卡片单独排版：内容比普通气泡多，需要更宽且不带气泡内边距
+              if (m.message_type === 'meal') {
+                return (
+                  <View key={m.id} className="flex-row justify-start items-end gap-2">
+                    <View className="w-8 h-8 rounded-full bg-primary-container items-center justify-center">
+                      <MaterialCommunityIcons name="heart" size={16} color={COLORS.primary} />
+                    </View>
+                    <View style={{ flex: 1, maxWidth: '88%' }}>
+                      <MealCard raw={m.content} />
+                      <Text className="text-[10px] text-ink-faint mt-1 ml-1">{dayjs(m.created_at).format('HH:mm')}</Text>
+                    </View>
                   </View>
-                )}
-                <View className={`max-w-[78%] rounded-3xl px-4 py-2.5 ${m.role === 'user' ? 'bg-primary rounded-br-sm' : 'bg-surface rounded-bl-sm shadow-card'}`}>
-                  {m.role === 'user' ? (
-                    m.message_type === 'video' ? (
-                      <Video
-                        source={{ uri: m.content }}
-                        style={{ width: 180, height: 240, borderRadius: 12, backgroundColor: '#000' }}
-                        useNativeControls
-                        resizeMode={ResizeMode.COVER}
-                        isLooping={false}
-                      />
-                    ) : m.message_type === 'image' ? (
-                      <Image source={{ uri: m.content }} style={{ width: 180, height: 180, borderRadius: 12 }} resizeMode="cover" />
-                    ) : (
-                      <Text className="text-white leading-5">{m.content}</Text>
-                    )
-                  ) : (
-                    <RichText content={m.content} color="#2F2A24" muted="#6B6259" size={15} />
+                );
+              }
+              return (
+                <View key={m.id} className={`flex-row ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+                  {m.role !== 'user' && (
+                    <View className="w-8 h-8 rounded-full bg-primary-container items-center justify-center">
+                      <MaterialCommunityIcons name="heart" size={16} color={COLORS.primary} />
+                    </View>
                   )}
-                  <Text className={`text-[11px] mt-1 ${m.role === 'user' ? 'text-white/70' : 'text-ink-mute'}`}>{dayjs(m.created_at).format('HH:mm')}</Text>
+                  <View className={`max-w-[78%] rounded-3xl px-4 py-2.5 ${m.role === 'user' ? 'bg-primary rounded-br-sm' : 'bg-surface rounded-bl-sm shadow-card'}`}>
+                    {m.role === 'user' ? (
+                      m.message_type === 'video' ? (
+                        <Video
+                          source={{ uri: m.content }}
+                          style={{ width: 180, height: 240, borderRadius: 12, backgroundColor: '#000' }}
+                          useNativeControls
+                          resizeMode={ResizeMode.COVER}
+                          isLooping={false}
+                        />
+                      ) : m.message_type === 'image' ? (
+                        <Image source={{ uri: m.content }} style={{ width: 180, height: 180, borderRadius: 12 }} resizeMode="cover" />
+                      ) : (
+                        <Text className="text-white leading-5">{m.content}</Text>
+                      )
+                    ) : (
+                      <RichText content={m.content} color="#2F2A24" muted="#6B6259" size={15} />
+                    )}
+                    <Text className={`text-[11px] mt-1 ${m.role === 'user' ? 'text-white/70' : 'text-ink-mute'}`}>{dayjs(m.created_at).format('HH:mm')}</Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
             {uploadingImg && (
               <View className="flex-row justify-end">
                 <View className="bg-primary/70 rounded-3xl rounded-br-sm px-4 py-3 flex-row items-center gap-2">
@@ -325,6 +364,28 @@ export default function HomeScreen() {
                 </View>
               </View>
             )}
+            {analyzing && (
+              <View className="flex-row items-end gap-2">
+                <View className="w-8 h-8 rounded-full bg-primary-container items-center justify-center">
+                  <MaterialCommunityIcons name="heart" size={16} color={COLORS.primary} />
+                </View>
+                <View className="bg-surface rounded-3xl rounded-bl-sm px-4 py-3 flex-row items-center gap-2 shadow-card">
+                  <ActivityIndicator color={COLORS.primary} size="small" />
+                  <Text className="text-ink-mute text-sm">暖暖正在看这一餐…</Text>
+                </View>
+              </View>
+            )}
+            {analyzeFail ? (
+              <View className="flex-row items-end gap-2">
+                <View className="w-8 h-8 rounded-full bg-primary-container items-center justify-center">
+                  <MaterialCommunityIcons name="heart" size={16} color={COLORS.primary} />
+                </View>
+                <View className="bg-surface rounded-3xl rounded-bl-sm px-4 py-3 shadow-card" style={{ maxWidth: '78%' }}>
+                  <Text className="text-ink text-sm leading-5">{analyzeFail}</Text>
+                  <Text className="text-ink-mute text-[11px] mt-1">也可以直接打字告诉我吃了什么</Text>
+                </View>
+              </View>
+            ) : null}
             {sending && (
               <View className="flex-row items-end gap-2">
                 <View className="w-8 h-8 rounded-full bg-primary-container items-center justify-center"><MaterialCommunityIcons name="heart" size={16} color={COLORS.primary} /></View>

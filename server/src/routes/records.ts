@@ -184,11 +184,46 @@ router.get("/today", async (req, res) => {
       }
       result[cat] = enriched;
     }
+    // 有真实分析结果时以它为准；没有才退回标题里手写的 kcal
+    const mealKcal = await mealCaloriesToday(userId);
+    if (mealKcal > 0) result.dietCalories = mealKcal;
+
     return res.json(result);
   } catch (e: any) {
     return res.status(500).json({ error: e.message });
   }
 });
+
+/**
+ * 今日饮食热量（真实来源）
+ *
+ * 原来的实现是从打卡标题里正则抠「数字 + kcal」，而拍照打卡生成的标题里
+ * 根本没有数字，所以饮食热量长期恒为 0 —— 「结合一天饮食状况」这件事
+ * 其实一直没有数据支撑。改为读 meal 消息里的分析结果。
+ */
+async function mealCaloriesToday(userId: string): Promise<number> {
+  try {
+    const { start, end } = todayRange();
+    const { data } = await client
+      .from("chat_messages")
+      .select("content")
+      .eq("user_id", userId)
+      .eq("message_type", "meal")
+      .gte("created_at", start)
+      .lte("created_at", end);
+    let sum = 0;
+    for (const row of data || []) {
+      try {
+        sum += Number(JSON.parse(String((row as any).content || "{}"))?.totals?.kcal || 0);
+      } catch {
+        // 单条解析失败不影响汇总
+      }
+    }
+    return Math.round(sum);
+  } catch {
+    return 0;
+  }
+}
 
 // 最近 n 天的摄入与消耗趋势（用于身体记录页的趋势图）
 // 接口：GET /api/v1/records/trend?userId=&days=7
