@@ -1,6 +1,7 @@
 import { LLMClient, Config, KnowledgeClient, DataSourceType, HeaderUtils, type Message } from "coze-coding-dev-sdk";
 import type { Request } from "express";
 import { searchGuidelines, guidelinesToText } from "../data/guidelines";
+import { findSubstitutes, substitutesToText } from "../data/substitutions";
 
 export const DIET_SOURCES = ["中国居民膳食指南2022", "食物成分表第6版"];
 export const EXERCISE_SOURCES = ["ACSM运动指南"];
@@ -136,13 +137,18 @@ export async function chatReply(req: Request, history: { role: string; content: 
     { role: "system" as const, content: ctxText(ctx) },
   ];
 
-  // 用用户最后一句话去本地条文库里检索，命中才注入。
+  // 用用户最后一句话去本地知识库里检索，命中才注入。
   // 命中为 0 时不注入任何条文，让模型老实说"这是通用建议"，
   // 而不是塞一堆不相关的条文逼它硬凑一句"依据《XX指南》"。
   const lastUser = [...history].reverse().find((m) => m.role === "user")?.content || "";
+  const refs: string[] = [];
   const hits = searchGuidelines(lastUser, 3);
-  if (hits.length) {
-    messages.push({ role: "system" as const, content: guidelinesToText(hits) });
+  if (hits.length) refs.push(guidelinesToText(hits));
+  // 用户问"不吃X能换什么""痛风能吃虾吗"时，给可执行的替代方案而不是只给禁令
+  const subs = findSubstitutes(lastUser, 2);
+  if (subs.length) refs.push(substitutesToText(subs));
+  if (refs.length) {
+    messages.push({ role: "system" as const, content: refs.join("\n\n") });
   }
 
   for (const m of history) {

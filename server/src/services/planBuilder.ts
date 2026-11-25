@@ -14,6 +14,7 @@ import { RECIPES, type Recipe } from "../data/recipes";
 import { WORKOUTS, type Workout } from "../data/workouts";
 import { effectiveConditions, estimateCalories, type UserContext } from "./planning";
 import { computeTarget, type GoalKind } from "../data/nutrition";
+import { filterByPrefs, scoreForPrefs } from "../data/substitutions";
 
 export interface PlanItemDraft {
   title: string;
@@ -100,7 +101,10 @@ export function dailyEnergyTarget(ctx: UserContext, goalCategory: string) {
 /** 候选池：剔除命中病史禁忌的菜谱 */
 export function candidateRecipes(ctx: UserContext): Recipe[] {
   const conds = effectiveConditions(ctx);
-  return RECIPES.filter((r) => !(r.avoidFor || []).some((c) => conds.includes(c)));
+  const byCondition = RECIPES.filter((r) => !(r.avoidFor || []).some((c) => conds.includes(c)));
+  // 饮食偏好此前只拼进提示词、代码层面不过滤，勾了素食照样排出红烧带鱼。
+  // 这里真正过滤：素食与少甜属不可妥协项，其余偏好走 scoreForPrefs 加权。
+  return filterByPrefs(byCondition, ctx.dietPrefs || []);
 }
 
 export function candidateWorkouts(ctx: UserContext): Workout[] {
@@ -121,9 +125,9 @@ const TAG_AFFINITY: Record<MealSlot, string[]> = {
   other: ["加餐"],
 };
 
-function dishScore(r: Recipe, slot: MealSlot, slotTarget: number): number {
+function dishScore(r: Recipe, slot: MealSlot, slotTarget: number, prefs: string[] = []): number {
   const hits = TAG_AFFINITY[slot].filter((t) => (r.tags || []).includes(t)).length;
-  let score = Math.abs(r.calories - slotTarget) - hits * 120;
+  let score = Math.abs(r.calories - slotTarget) - hits * 120 + scoreForPrefs(r, prefs);
   // 正餐不宜过轻，避免"一碗汤当晚餐"
   if (slot !== "other" && r.calories < slotTarget * 0.5) score += 250;
   // 早餐避免下饭/家常类正餐菜
@@ -148,11 +152,12 @@ export function buildPlanByRules(ctx: UserContext, goal: GoalLike): PlanItemDraf
     const pool = recipes.filter((r) => !used.has(r.id));
     const bag = pool.length ? pool : recipes;
     if (!bag.length) return null;
+    const prefs = ctx.dietPrefs || [];
     let best = bag[0];
-    let bestScore = dishScore(best, slotKey, target * ratio);
+    let bestScore = dishScore(best, slotKey, target * ratio, prefs);
     for (const r of bag.slice(1)) {
-      const s = dishScore(r, slotKey, target * ratio);
-      if (s < bestScore) { bestScore = s; best = r; }
+      const sc = dishScore(r, slotKey, target * ratio, prefs);
+      if (sc < bestScore) { bestScore = sc; best = r; }
     }
     used.add(best.id);
     return best;

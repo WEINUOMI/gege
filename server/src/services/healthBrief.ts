@@ -16,6 +16,7 @@ import {
 } from "../data/clinical";
 import { conditionsToText } from "../data/conditions";
 import { computeTarget, targetToText, type NutritionTarget, type GoalKind } from "../data/nutrition";
+import { prefsToText } from "../data/substitutions";
 
 const client = getSupabaseClient();
 
@@ -188,7 +189,11 @@ export async function buildHealthBrief(userId: string): Promise<HealthBrief> {
   if (profile.waist) basics.push(`腰围 ${profile.waist} cm`);
   if (profile.body_fat) basics.push(`体脂率 ${profile.body_fat}%`);
   if (basics.length) blocks.push(`【身体档案】${basics.join("｜")}`);
-  if (prefs.length) blocks.push(`【饮食偏好】${prefs.join("、")}（推荐时必须避开不吃的，不要推荐后又说"可以不吃"）`);
+  if (prefs.length) {
+    // 偏好要落成可执行约束，而不是只报一句"用户偏好清淡"——后者模型容易忽略
+    const prefText = prefsToText(prefs);
+    if (prefText) blocks.push(`【饮食偏好】\n${prefText}`);
+  }
 
   // ---- 2. 指标判读 ----
   const readText = readingsToText(readings);
