@@ -13,6 +13,7 @@ import { llmText } from "./ai";
 import { RECIPES, type Recipe } from "../data/recipes";
 import { WORKOUTS, type Workout } from "../data/workouts";
 import { effectiveConditions, estimateCalories, type UserContext } from "./planning";
+import { computeTarget, type GoalKind } from "../data/nutrition";
 
 export interface PlanItemDraft {
   title: string;
@@ -71,24 +72,29 @@ export function mealSlot(hhmm: string): MealSlot {
 const SLOT_LABEL: Record<MealSlot, string> = { breakfast: "早餐", lunch: "午餐", dinner: "晚餐", other: "加餐" };
 
 /**
- * 每日能量目标：Mifflin-St Jeor 估算基础代谢 × 轻体力活动系数，
- * 再按目标方向加减。仅作生活方式管理的量级参考，不用于临床营养处方。
+ * 每日能量目标。计算逻辑已收敛到 data/nutrition.ts，与对话、营养目标展示
+ * 共用同一套公式，避免计划里算出的热量和暖暖回答里说的热量对不上。
  */
 export function dailyEnergyTarget(ctx: UserContext, goalCategory: string) {
-  const weight = ctx.weight || 60;
-  const height = ctx.height || 165;
-  const age = ctx.age || 32;
-  const isMale = ctx.gender === "男" || ctx.gender === "male";
-  const bmr = Math.round(10 * weight + 6.25 * height - 5 * age + (isMale ? 5 : -161));
-  const tdee = Math.round(bmr * 1.375);
-  const floor = isMale ? 1500 : 1200;
+  const kind: GoalKind =
+    goalCategory === "weight_loss" ? "weight_loss"
+      : goalCategory === "muscle" ? "muscle_gain"
+        : "maintain";
 
-  let target = tdee;
-  if (goalCategory === "weight_loss") target = Math.max(floor, tdee - 400);
-  else if (goalCategory === "muscle") target = tdee + 300;
-  else if (goalCategory === "health_control") target = tdee;
+  const t = computeTarget(
+    {
+      height: ctx.height,
+      weight: ctx.weight,
+      age: ctx.age,
+      gender: ctx.gender,
+      medical_history: ctx.conditions,
+    },
+    kind
+  );
 
-  return { bmr, tdee, target };
+  // 缺身高时 computeTarget 返回 null，退回保守默认值，不让计划生成中断
+  if (!t) return { bmr: 1400, tdee: 1900, target: 1900 };
+  return { bmr: t.bmr, tdee: t.tdee, target: t.intake };
 }
 
 /** 候选池：剔除命中病史禁忌的菜谱 */

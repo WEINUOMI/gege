@@ -3,41 +3,29 @@ import { getSupabaseClient } from "../storage/database/supabase-client";
 import { chatReply, type HealthContext } from "../services/ai";
 import { LLMClient, Config, HeaderUtils, type Message } from "coze-coding-dev-sdk";
 import { todayRange } from "../utils/date";
+import { buildHealthBrief, todayProgressText } from "../services/healthBrief";
 
 const router = Router();
 const client = getSupabaseClient();
 
 async function buildContext(userId: string): Promise<HealthContext> {
-  const { data: profile } = await client.from("health_profiles").select("*").eq("user_id", userId).maybeSingle();
   const { data: goals } = await client.from("goals").select("id,title,status").eq("user_id", userId).eq("status", "active");
+  const { data: profile } = await client.from("health_profiles").select("*").eq("user_id", userId).maybeSingle();
   const p: any = profile || {};
   const bp = p.blood_pressure_systolic && p.blood_pressure_diastolic ? `${p.blood_pressure_systolic}/${p.blood_pressure_diastolic}` : "";
 
-  // 把今日计划注入对话上下文，让暖暖能针对真实计划回答，而不是泛泛而谈
-  let todayPlan: string[] = [];
-  let todayProgress = "";
-  const goalIds = (goals || []).map((g: any) => g.id);
-  if (goalIds.length) {
-    const { data: items } = await client
-      .from("plan_items")
-      .select("title,planned_time")
-      .in("goal_id", goalIds)
-      .order("planned_time", { ascending: true });
-    todayPlan = (items || [])
-      .filter((i: any) => i.planned_time)
-      .map((i: any) => `${i.planned_time} ${i.title}`);
-    const { start, end } = todayRange();
-    const { data: cks } = await client
-      .from("checkins")
-      .select("id")
-      .in("goal_id", goalIds)
-      .gte("checkin_date", start)
-      .lte("checkin_date", end);
-    todayProgress = `${(cks || []).length}/${(items || []).length}`;
-  }
+  // 完整身体简报：指标判读 + 病史约束 + 营养目标 + 变化趋势 + 坚持情况
+  // 今日计划单独拼在后面，带 ✅ 标记已完成的项
+  const [brief, planText] = await Promise.all([
+    buildHealthBrief(userId).catch(() => null),
+    todayProgressText(userId).catch(() => ""),
+  ]);
+  const briefText = [brief?.text, planText].filter(Boolean).join("\n\n");
 
   return {
     nickname: "主人",
+    brief: briefText || undefined,
+    // 以下为 brief 不可用时的兜底字段
     height: p.height || undefined,
     weight: p.weight || undefined,
     age: p.age ? String(p.age) : undefined,
@@ -48,8 +36,6 @@ async function buildContext(userId: string): Promise<HealthContext> {
     heartRate: p.heart_rate || undefined,
     medicalHistory: p.medical_history || [],
     goals: (goals || []).map((g: any) => g.title),
-    todayPlan,
-    todayProgress: todayProgress || undefined,
   };
 }
 
