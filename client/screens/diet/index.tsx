@@ -9,6 +9,7 @@ import { useFocusEffect } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Screen } from '@/components/Screen';
 import { PageHeader, PrimaryButton, COLORS } from '@/components/ui';
+import { MealLogger } from '@/components/MealLogger';
 import { useUser } from '@/contexts/UserContext';
 import { apiGet, apiPost, uploadProof } from '@/utils/api';
 
@@ -57,6 +58,8 @@ export default function DietScreen() {
   const [meal, setMeal] = useState(guessMeal());
   const [uploading, setUploading] = useState(false);
   const [today, setToday] = useState<any>({ dietCalories: 0, diet: [] });
+  const [loggerOpen, setLoggerOpen] = useState(false);
+  const [lastLog, setLastLog] = useState<any>(null);
 
   const loadToday = useCallback(async () => {
     if (!userId) return;
@@ -160,6 +163,39 @@ export default function DietScreen() {
             <Text className="text-ink-mute text-[11px] mt-1">{today.workoutMinutes || 0} 分钟</Text>
           </View>
         </View>
+
+        {/* 自定义记录入口：推荐只是参考，真实吃的东西往往不在列表里 */}
+        <TouchableOpacity
+          className="flex-row items-center gap-3 bg-surface rounded-3xl px-4 py-3.5 mt-3 border border-outline-variant shadow-card"
+          activeOpacity={0.8}
+          onPress={() => setLoggerOpen(true)}
+        >
+          <View className="w-11 h-11 rounded-2xl bg-secondary-container items-center justify-center">
+            <MaterialCommunityIcons name="camera-plus-outline" size={22} color={COLORS.secondary} />
+          </View>
+          <View className="flex-1">
+            <Text className="text-ink font-bold">记我实际吃的</Text>
+            <Text className="text-ink-mute text-[11px] mt-0.5">拍照 / 相册 / 打字填写，不在推荐里也能记</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.onSurfaceVariant} />
+        </TouchableOpacity>
+
+        {/* 刚记下这一餐的反馈（含点评） */}
+        {lastLog ? (
+          <View className="bg-surface rounded-3xl p-4 mt-3 border border-primary" style={{ borderWidth: 1 }}>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-ink font-bold">刚记的一餐</Text>
+              <Text className="text-primary font-bold">{lastLog.totals?.kcal || 0}<Text className="text-[11px] font-normal text-ink-mute"> kcal</Text></Text>
+            </View>
+            <Text className="text-ink-mute text-[11px] mt-1">{lastLog.meal || ''} · {(lastLog.items || []).map((i: any) => i.name).join('、')}</Text>
+            {!!lastLog.review && (
+              <Text className="text-ink text-xs leading-5 mt-2">{lastLog.review}</Text>
+            )}
+            <TouchableOpacity className="self-end mt-1" onPress={() => setLastLog(null)}>
+              <Text className="text-ink-mute text-[11px]">知道了</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         {/* 个性化说明 */}
         {!!note && (
@@ -401,6 +437,14 @@ export default function DietScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* 记我实际吃的（拍照识别 / 手动填写） */}
+      <MealLogger
+        visible={loggerOpen}
+        userId={userId}
+        onClose={() => setLoggerOpen(false)}
+        onSaved={(r) => { setLastLog(r); loadToday(); }}
+      />
     </Screen>
   );
 }

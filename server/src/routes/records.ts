@@ -1,68 +1,18 @@
 import { Router } from "express";
 import { getSupabaseClient } from "../storage/database/supabase-client";
 import { fileUrl } from "../services/storage";
-import { todayRange, dayRange, lastNDays, localToday } from "../utils/date";
+import { todayRange, dayRange, lastNDays } from "../utils/date";
+import { todayIntakeKcal } from "../services/intake";
+import { ACTIVITIES, ACTIVITY_SOURCE, DEFAULT_CUSTOM_MET } from "../data/activities";
+import {
+  ensureAnchor,
+  addPoints,
+  ANCHOR_META,
+  type AnchorCategory,
+} from "../services/checkinLog";
 
 const router = Router();
 const client = getSupabaseClient();
-
-type AnchorCategory = "diet" | "exercise" | "study";
-
-const ANCHOR_META: Record<AnchorCategory, { title: string; itemTitle: string; points: number }> = {
-  diet: { title: "饮食记录", itemTitle: "今日饮食记录", points: 8 },
-  exercise: { title: "运动记录", itemTitle: "今日运动", points: 10 },
-  study: { title: "学习记录", itemTitle: "今日学习", points: 10 },
-};
-
-/**
- * 找到（或创建）某个类别的记账型目标。
- *
- * 为什么需要它：打卡凭证必须挂在某个目标下（checkins.goal_id 非空），
- * 而饮食/运动/学习记录是"随手记"，不该强迫用户先建目标。
- * 因此这里自动维护一个固定锚点目标，用户不必感知它的存在。
- */
-async function ensureAnchor(userId: string, category: AnchorCategory): Promise<{ goalId: number; planItemId: number | null }> {
-  const meta = ANCHOR_META[category];
-  const { data: existing } = await client
-    .from("goals")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("category", category)
-    .eq("status", "active")
-    .order("id")
-    .limit(1);
-  if (existing && existing.length) {
-    const goalId = Number(existing[0].id);
-    const { data: items } = await client.from("plan_items").select("id").eq("goal_id", goalId).order("id").limit(1);
-    return { goalId, planItemId: items && items.length ? Number(items[0].id) : null };
-  }
-  const { data: created, error } = await client
-    .from("goals")
-    .insert({
-      user_id: userId,
-      title: meta.title,
-      category,
-      target_value: "自动创建，用于日常记录",
-      start_date: localToday(),
-      daily_points: meta.points,
-      from_system: true,
-      status: "active",
-    })
-    .select()
-    .single();
-  if (error || !created) throw new Error(error?.message || "创建记录目标失败");
-  const goalId = Number(created.id);
-  const { data: item } = await client
-    .from("plan_items")
-    .insert({ goal_id: goalId, title: meta.itemTitle, category: category === "diet" ? "diet" : category === "exercise" ? "exercise" : "study", planned_time: "21:00", points: meta.points })
-    .select()
-    .single();
-  return { goalId, planItemId: item ? Number(item.id) : null };
-}
-
-async function addPoints(userId: string, goalId: number, amount: number, reason: string) {
-  await client.from("points").insert({ user_id: userId, goal_id: goalId, amount, reason });
-}
 
 // 取得某类记录的锚点目标（前端需要 goalId 才能跳转到记录详情）
 // 接口：GET /api/v1/records/anchor?userId=&category=diet
@@ -184,9 +134,8 @@ router.get("/today", async (req, res) => {
       }
       result[cat] = enriched;
     }
-    // 有真实分析结果时以它为准；没有才退回标题里手写的 kcal
-    const mealKcal = await mealCaloriesToday(userId);
-    if (mealKcal > 0) result.dietCalories = mealKcal;
+    // 统一口径：打卡 + 未折成打卡的餐食分析，避免两边各算一套
+    result.dietCalories = await todayIntakeKcal(userId);
 
     return res.json(result);
   } catch (e: any) {
@@ -195,35 +144,19 @@ router.get("/today", async (req, res) => {
 });
 
 /**
- * 今日饮食热量（真实来源）
+ * 可选的常见活动（自定义运动记录用）
+ * 接口：GET /api/v1/records/activities
  *
- * 原来的实现是从打卡标题里正则抠「数字 + kcal」，而拍照打卡生成的标题里
- * 根本没有数字，所以饮食热量长期恒为 0 —— 「结合一天饮食状况」这件事
- * 其实一直没有数据支撑。改为读 meal 消息里的分析结果。
+ * 推荐库只覆盖计划动作，用户实际做的往往不在里面（遛狗、爬楼、广场舞）。
+ * 这里给出名称 + MET，前端选完直接按 MET 结算热量。
  */
-async function mealCaloriesToday(userId: string): Promise<number> {
-  try {
-    const { start, end } = todayRange();
-    const { data } = await client
-      .from("chat_messages")
-      .select("content")
-      .eq("user_id", userId)
-      .eq("message_type", "meal")
-      .gte("created_at", start)
-      .lte("created_at", end);
-    let sum = 0;
-    for (const row of data || []) {
-      try {
-        sum += Number(JSON.parse(String((row as any).content || "{}"))?.totals?.kcal || 0);
-      } catch {
-        // 单条解析失败不影响汇总
-      }
-    }
-    return Math.round(sum);
-  } catch {
-    return 0;
-  }
-}
+router.get("/activities", (_req, res) => {
+  res.json({
+    activities: ACTIVITIES,
+    defaultMet: DEFAULT_CUSTOM_MET,
+    source: ACTIVITY_SOURCE,
+  });
+});
 
 // 最近 n 天的摄入与消耗趋势（用于身体记录页的趋势图）
 // 接口：GET /api/v1/records/trend?userId=&days=7

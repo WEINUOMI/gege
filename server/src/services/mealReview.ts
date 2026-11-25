@@ -8,8 +8,8 @@ import {
   type FoodCategory,
 } from "../data/foods";
 import { buildHealthBrief } from "./healthBrief";
+import { todayIntakeKcal } from "./intake";
 import { getSupabaseClient } from "../storage/database/supabase-client";
-import { todayRange } from "../utils/date";
 
 const client = getSupabaseClient();
 const MODEL = process.env.MEAL_MODEL || "doubao-seed-2-0-pro-260215";
@@ -206,31 +206,9 @@ export function computeItems(rawItems: any[]): { items: MealItemResult[]; totals
   return { items, totals };
 }
 
-/** 今日已摄入（本餐之前），从聊天里的 meal 消息累加 */
+/** 今日已摄入（本餐之前）。口径与「今日摄入」卡片保持一致，见 services/intake.ts */
 export async function todayIntake(userId: string, excludeMessageId?: number): Promise<number> {
-  try {
-    const { start, end } = todayRange();
-    const { data } = await client
-      .from("chat_messages")
-      .select("id,content")
-      .eq("user_id", userId)
-      .eq("message_type", "meal")
-      .gte("created_at", start)
-      .lte("created_at", end);
-    let sum = 0;
-    for (const row of data || []) {
-      if (excludeMessageId && Number((row as any).id) === excludeMessageId) continue;
-      try {
-        const obj = JSON.parse(String((row as any).content || "{}"));
-        sum += Number(obj?.totals?.kcal || 0);
-      } catch {
-        // 历史脏数据跳过，不影响汇总
-      }
-    }
-    return Math.round(sum);
-  } catch {
-    return 0;
-  }
+  return todayIntakeKcal(userId, excludeMessageId);
 }
 
 /** 规则兜底点评：模型不可用时仍能给出有数字、有结论的一段话 */
@@ -275,7 +253,7 @@ export function ruleBasedReview(
 }
 
 /** 让模型把系统算好的数字组织成一段自然点评。失败时退回规则点评。 */
-async function writeReview(
+export async function writeReview(
   req: Request,
   params: {
     items: MealItemResult[];
@@ -468,6 +446,8 @@ export async function saveMealMessage(
   userId: string,
   imageUrl: string,
   analysis: MealAnalysis,
+  /** 附加字段，如 checkinId（该餐已确认记入打卡）、meal */
+  extra: Record<string, any> = {},
 ): Promise<any | null> {
   const payload = {
     imageUrl,
@@ -480,6 +460,7 @@ export async function saveMealMessage(
     intakeBefore: analysis.intakeBefore,
     intakeAfter: analysis.intakeAfter,
     sources: FOOD_SOURCES,
+    ...extra,
   };
   const { data } = await client
     .from("chat_messages")

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, Modal, Linking,
-  ActivityIndicator, Alert, Platform,
+  ActivityIndicator, Alert, Platform, TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -10,7 +10,7 @@ import Toast from 'react-native-toast-message';
 import { Screen } from '@/components/Screen';
 import { PageHeader, PrimaryButton, COLORS } from '@/components/ui';
 import { useUser } from '@/contexts/UserContext';
-import { apiGet, apiPost, uploadProof } from '@/utils/api';
+import { apiGet, apiPost, uploadProof, uploadProofBase64 } from '@/utils/api';
 
 interface Workout {
   id: string;
@@ -53,10 +53,30 @@ export default function ExerciseScreen() {
   const [uploading, setUploading] = useState(false);
   const [today, setToday] = useState<any>({ workoutCalories: 0, workoutMinutes: 0, exercise: [] });
 
+  // 自定义运动记录
+  const [acts, setActs] = useState<{ id: string; name: string; emoji: string; met: number; hint: string }[]>([]);
+  const [defaultMet, setDefaultMet] = useState(4);
+  const [pickOpen, setPickOpen] = useState(false);
+  const [pickName, setPickName] = useState('');
+  const [pickMet, setPickMet] = useState(4);
+  const [pickMin, setPickMin] = useState(30);
+  const [pickPhotoKey, setPickPhotoKey] = useState('');
+  const [pickPhotoUrl, setPickPhotoUrl] = useState('');
+  const [pickBusy, setPickBusy] = useState(false);
+
   const loadToday = useCallback(async () => {
     if (!userId) return;
     try { setToday(await apiGet<any>(`/api/v1/records/today?userId=${userId}`)); } catch { /* 忽略 */ }
   }, [userId]);
+
+  const loadActivities = useCallback(async () => {
+    if (acts.length) return;
+    try {
+      const r = await apiGet<any>('/api/v1/records/activities');
+      setActs(r.activities || []);
+      setDefaultMet(Number(r.defaultMet) || 4);
+    } catch { /* 取不到就只让手动填 */ }
+  }, [acts.length]);
 
   const fetchList = useCallback(async (nextOffset: number, append: boolean, p: string, m: number) => {
     if (!userId) return;
@@ -82,6 +102,7 @@ export default function ExerciseScreen() {
 
   useFocusEffect(useCallback(() => {
     loadToday();
+    loadActivities();
     if (!list.length) fetchList(0, false, '', 0);
   }, [userId]));
 
@@ -138,6 +159,85 @@ export default function ExerciseScreen() {
     }
   };
 
+  /* ---------------- 自定义运动记录 ---------------- */
+
+  const openPicker = () => {
+    setPickName('');
+    setPickMet(defaultMet);
+    setPickMin(30);
+    setPickPhotoKey('');
+    setPickPhotoUrl('');
+    setPickOpen(true);
+  };
+
+  /** 选运动名时同步换算 MET：表里有就按表，没有就按中等强度估 */
+  const chooseName = (name: string) => {
+    setPickName(name);
+    const hit = acts.find((a) => a.name === name) || acts.find((a) => name.includes(a.name));
+    setPickMet(hit ? hit.met : defaultMet);
+  };
+
+  const attachPhoto = async (fromCamera: boolean) => {
+    try {
+      if (Platform.OS !== 'web' && fromCamera) {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) { Alert.alert('需要相机权限', '开启后就能拍运动凭证'); return; }
+      }
+      setPickBusy(true);
+      // 网页端没有原生相机，退回相册
+      const useCamera = fromCamera && Platform.OS !== 'web';
+      const res = useCamera
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.6, base64: true })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, base64: true });
+      if (res.canceled || !res.assets?.length) return;
+      const asset = res.assets[0];
+      const mime = asset.mimeType || 'image/jpeg';
+      let up: any = null;
+      if (asset.base64) {
+        try { up = await uploadProofBase64(asset.base64, mime, 'workout.jpg'); } catch { up = null; }
+      }
+      if (!up?.key) up = await uploadProof(asset.uri, mime, 'workout.jpg');
+      setPickPhotoKey(up.key || '');
+      setPickPhotoUrl(up.url || '');
+      Toast.show({ type: 'success', text1: '照片已附上' });
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: '照片没传上去', text2: e?.message || '也可以不传，直接记' });
+    } finally {
+      setPickBusy(false);
+    }
+  };
+
+  const submitCustom = async () => {
+    if (!userId) return;
+    const name = pickName.trim();
+    if (!name) {
+      Alert.alert('先选一项运动', '从上面挑一个，或在输入框里写运动名称');
+      return;
+    }
+    setPickBusy(true);
+    try {
+      const r = await apiPost<any>('/api/v1/records/workout', {
+        userId,
+        name,
+        minutes: pickMin,
+        met: pickMet,
+        calories: kcal(pickMet, pickMin),
+        photoKey: pickPhotoKey || undefined,
+      });
+      Toast.show({
+        type: 'success',
+        text1: '记上啦',
+        text2: `${name} ${pickMin} 分钟 · 约 ${r.calories} kcal，+${r.pointsEarned} 积分`,
+      });
+      setPickOpen(false);
+      loadToday();
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: '记录失败', text2: e?.message || '请重试' });
+    } finally {
+      setPickBusy(false);
+    }
+  };
+
   return (
     <Screen safeAreaEdges={['left', 'right', 'bottom']} backgroundColor={COLORS.bg}>
       <PageHeader title="轻盈动起来" right={<MaterialCommunityIcons name="run" size={22} color={COLORS.primary} />} />
@@ -175,6 +275,22 @@ export default function ExerciseScreen() {
             )}
           </View>
         )}
+
+        {/* 自定义记录入口：走路、爬楼、跳操这些不在推荐里，也要能记 */}
+        <TouchableOpacity
+          className="flex-row items-center gap-3 bg-surface rounded-3xl px-4 py-3.5 mt-3 border border-outline-variant shadow-card"
+          activeOpacity={0.8}
+          onPress={openPicker}
+        >
+          <View className="w-11 h-11 rounded-2xl bg-primary-container items-center justify-center">
+            <MaterialCommunityIcons name="plus-circle-outline" size={22} color={COLORS.primary} />
+          </View>
+          <View className="flex-1">
+            <Text className="text-ink font-bold">记我做过的运动</Text>
+            <Text className="text-ink-mute text-[11px] mt-0.5">散步、爬楼、跳操…选名称填时长，可附照片</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={COLORS.onSurfaceVariant} />
+        </TouchableOpacity>
 
         {/* 筛选 */}
         <Text className="text-ink font-bold mt-5 mb-2">想练哪里？</Text>
@@ -370,6 +486,106 @@ export default function ExerciseScreen() {
             <TouchableOpacity className="h-10 items-center justify-center" onPress={() => setPicking(null)}>
               <Text className="text-ink-mute text-xs">取消</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* 自定义运动记录 */}
+      <Modal visible={pickOpen} transparent animationType="slide" onRequestClose={() => setPickOpen(false)}>
+        <View className="flex-1 bg-black/30 justify-end">
+          <View className="rounded-t-3xl px-5 pt-5" style={{ maxHeight: '90%', backgroundColor: COLORS.surface }}>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-ink text-lg font-bold">记我做过的运动</Text>
+              <TouchableOpacity onPress={() => setPickOpen(false)} className="w-9 h-9 rounded-full bg-surface-container items-center justify-center">
+                <MaterialCommunityIcons name="close" size={18} color={COLORS.onSurface} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ paddingBottom: 28 }} keyboardShouldPersistTaps="handled">
+              <Text className="text-ink-mute text-xs mt-1">做了什么就选什么，热量按 MET 和体重 {weight}kg 估算。</Text>
+
+              <Text className="text-ink font-bold mt-4 mb-2">选一项</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {acts.map((a) => (
+                  <TouchableOpacity
+                    key={a.id}
+                    onPress={() => chooseName(a.name)}
+                    className={`flex-row items-center gap-1 px-3 py-2 rounded-full border ${pickName === a.name ? 'bg-primary-container border-primary' : 'bg-surface border-outline-variant'}`}
+                  >
+                    <Text style={{ fontSize: 13 }}>{a.emoji}</Text>
+                    <Text className="text-ink text-xs">{a.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text className="text-ink-mute text-xs mt-4 mb-2">没找到？直接写</Text>
+              <View className="flex-row items-center bg-surface-container rounded-2xl px-3">
+                <MaterialCommunityIcons name="pencil-outline" size={16} color={COLORS.onSurfaceVariant} />
+                <TextInput
+                  value={pickName}
+                  onChangeText={chooseName}
+                  placeholder="如 陪孩子玩、爬山、羽毛球"
+                  placeholderTextColor="#A99F92"
+                  className="flex-1 ml-2 py-3 text-ink"
+                  selectionColor={COLORS.primary}
+                  returnKeyType="done"
+                />
+              </View>
+              <Text className="text-ink-mute text-[11px] mt-1.5">
+                {pickName.trim()
+                  ? `按强度 MET ${pickMet} 估算${acts.some((a) => a.name === pickName) ? '' : '（表中没有的活动按中等强度算）'}`
+                  : '填名字后自动按中等强度估算'}
+              </Text>
+
+              <Text className="text-ink font-bold mt-5 mb-2">练了多久</Text>
+              <View className="flex-row items-center justify-center gap-5">
+                <TouchableOpacity className="w-10 h-10 rounded-full bg-surface-container items-center justify-center" onPress={() => setPickMin((m) => Math.max(5, m - 5))}>
+                  <MaterialCommunityIcons name="minus" size={18} color={COLORS.onSurface} />
+                </TouchableOpacity>
+                <View className="items-center">
+                  <Text className="text-ink text-2xl font-bold">{pickMin}<Text className="text-sm font-normal text-ink-mute"> 分钟</Text></Text>
+                  <Text className="text-primary text-xs mt-1">约消耗 {kcal(pickMet, pickMin)} kcal</Text>
+                </View>
+                <TouchableOpacity className="w-10 h-10 rounded-full bg-surface-container items-center justify-center" onPress={() => setPickMin((m) => Math.min(300, m + 5))}>
+                  <MaterialCommunityIcons name="plus" size={18} color={COLORS.onSurface} />
+                </TouchableOpacity>
+              </View>
+
+              <Text className="text-ink font-bold mt-5 mb-2">运动凭证（可选）</Text>
+              {pickPhotoUrl ? (
+                <View className="flex-row items-center gap-2 bg-primary-container rounded-2xl px-3 py-2.5">
+                  <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.primary} />
+                  <Text className="flex-1 text-ink text-xs">照片已附上</Text>
+                  <TouchableOpacity onPress={() => { setPickPhotoKey(''); setPickPhotoUrl(''); }}>
+                    <Text className="text-ink-mute text-xs">移除</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View className="flex-row gap-2">
+                  <TouchableOpacity
+                    className="flex-1 h-11 rounded-2xl bg-surface-container items-center justify-center flex-row gap-1.5"
+                    disabled={pickBusy}
+                    onPress={() => attachPhoto(true)}
+                  >
+                    <MaterialCommunityIcons name="camera-outline" size={16} color={COLORS.onSurface} />
+                    <Text className="text-ink text-xs font-semibold">拍照</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="flex-1 h-11 rounded-2xl bg-surface-container items-center justify-center flex-row gap-1.5"
+                    disabled={pickBusy}
+                    onPress={() => attachPhoto(false)}
+                  >
+                    <MaterialCommunityIcons name="image-multiple-outline" size={16} color={COLORS.onSurface} />
+                    <Text className="text-ink text-xs font-semibold">从相册选</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <View className="h-5" />
+              <PrimaryButton title={pickBusy ? '处理中…' : '记上这一笔'} onPress={submitCustom} loading={pickBusy} />
+              <TouchableOpacity className="h-10 items-center justify-center mt-1" onPress={() => setPickOpen(false)}>
+                <Text className="text-ink-mute text-xs">取消</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
