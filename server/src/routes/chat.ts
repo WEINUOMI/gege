@@ -149,11 +149,22 @@ router.post("/:userId/ai", async (req, res) => {
     // 取最近历史做上下文
     const { data: msgs } = await client
       .from("chat_messages")
-      .select("role,content")
+      .select("role,content,message_type")
       .eq("user_id", userId)
       .order("created_at", { ascending: true })
       .limit(30);
-    const history = (msgs || []).map((m: any) => ({ role: m.role, content: m.content }));
+    // 图片/视频消息的 content 是带签名的对象存储 URL，直接喂给模型会有两个问题：
+    // 一是模型看到一长串无意义链接，二是它会把链接当成用户说的话去理解。
+    // 换成占位描述，模型只需知道"用户发了什么"，不需要那个地址。
+    const history = (msgs || []).map((m: any) => ({
+      role: m.role,
+      content:
+        m.message_type === "image"
+          ? "[用户发送了一张图片]"
+          : m.message_type === "video"
+            ? "[用户发送了一段视频]"
+            : m.content,
+    }));
     const ctx = await buildContext(userId);
 
     const config = new Config();

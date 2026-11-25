@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Modal, Image, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { Video, ResizeMode } from 'expo-av';
 import RNSSE from 'react-native-sse';
 import dayjs from 'dayjs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -132,29 +133,74 @@ export default function HomeScreen() {
   const pending = reminders.filter((r) => !r.done);
   const percent = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
 
-  const pickChatImage = async () => {
+  /**
+   * 发送图片/视频给暖暖。
+   * 原来只有一个入口且直接调 launchImageLibraryAsync（相册），
+   * 菜单上却写“拍照/从相册选择”——文案与行为不符，拍不了也录不了。
+   * 这里按微信的做法拆成三个独立入口：拍照、拍视频、相册（相册可同时选图和视频）。
+   */
+  const sendChatMedia = async (source: 'camera-photo' | 'camera-video' | 'library') => {
     setQuickOpen(false);
-    if (!userId) return;
+    if (!userId || uploadingImg) return;
+
+    // 网页端没有原生相机接口，拍照/拍视频统一退回相册（可取消退出）
+    const effective = Platform.OS === 'web' && source !== 'library' ? 'library' : source;
+
     if (Platform.OS !== 'web') {
-      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) { Alert.alert('暖暖提醒', '需要相册权限才能发图片哦'); return; }
+      if (effective === 'library') {
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!perm.granted) { Alert.alert('暖暖提醒', '需要相册权限，才能从相册选照片和视频哦'); return; }
+      } else {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) { Alert.alert('暖暖提醒', '需要相机权限才能拍摄哦，可以在手机设置里开启'); return; }
+      }
     }
+
     try {
       setUploadingImg(true);
-      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.5, base64: true });
-      if (res.canceled) return;
-      const asset = res.assets[0];
-      // 优先走 JSON(base64) 通道，失败再回退到原来的表单通道
-      let up: any = null;
-      if (asset.base64) {
-        try { up = await uploadProofBase64(asset.base64, 'image/jpeg', 'chat.jpg'); } catch { up = null; }
+      let res: ImagePicker.ImagePickerResult;
+      if (effective === 'camera-photo') {
+        res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.5, base64: true });
+      } else if (effective === 'camera-video') {
+        res = await ImagePicker.launchCameraAsync({ mediaTypes: ['videos'], videoMaxDuration: 10, quality: 0.5 });
+      } else {
+        res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images', 'videos'], allowsEditing: false, quality: 0.5, base64: true });
       }
-      if (!up?.key) up = await uploadProof(asset.uri, 'image/jpeg', 'chat.jpg');
-      await apiPost(`/api/v1/chat/${userId}/messages`, { role: 'user', content: up.url, messageType: 'image' });
+      if (res.canceled || !res.assets?.length) return;
+
+      const asset = res.assets[0];
+      const mime = asset.mimeType || (asset.type === 'video' ? 'video/mp4' : 'image/jpeg');
+      const isVideo = mime.startsWith('video/');
+
+      // 体积/时长前置校验：不先拦，等传到一半被网关断开，用户只看到一句“网络错误”
+      if (isVideo) {
+        if (asset.duration && asset.duration > 35000) {
+          Alert.alert('视频太长', '聊天里的视频请控制在 30 秒内，长视频建议发到打卡凭证里'); return;
+        }
+        if (asset.fileSize && asset.fileSize > 15 * 1024 * 1024) {
+          Alert.alert('视频太大', '请裁短一些，或换用相册里的短视频'); return;
+        }
+      } else if (asset.fileSize && asset.fileSize > 12 * 1024 * 1024) {
+        Alert.alert('图片太大', '请换一张小一些的图片'); return;
+      }
+
+      const fileName = isVideo ? 'chat.mp4' : 'chat.jpg';
+      let up: any = null;
+      // 图片优先走 base64 + JSON 通道（绕开 multipart 在部分网关被中断）；
+      // 视频体积大、base64 还会再膨胀 33%，只能走表单通道。
+      if (!isVideo && asset.base64) {
+        try { up = await uploadProofBase64(asset.base64, mime, fileName); } catch { up = null; }
+      }
+      if (!up?.key) up = await uploadProof(asset.uri, mime, fileName);
+
+      await apiPost(`/api/v1/chat/${userId}/messages`, {
+        role: 'user',
+        content: up.url,
+        messageType: isVideo ? 'video' : 'image',
+      });
       await loadMessages();
-      Alert.alert('已发送', '图片已发送给暖暖，主人可以继续聊聊');
     } catch (e: any) {
-      Alert.alert('上传失败', e.message || '请重试');
+      Alert.alert('发送失败', e?.message || '请重试');
     } finally {
       setUploadingImg(false);
     }
@@ -251,7 +297,15 @@ export default function HomeScreen() {
                 )}
                 <View className={`max-w-[78%] rounded-3xl px-4 py-2.5 ${m.role === 'user' ? 'bg-primary rounded-br-sm' : 'bg-surface rounded-bl-sm shadow-card'}`}>
                   {m.role === 'user' ? (
-                    m.message_type === 'image' ? (
+                    m.message_type === 'video' ? (
+                      <Video
+                        source={{ uri: m.content }}
+                        style={{ width: 180, height: 240, borderRadius: 12, backgroundColor: '#000' }}
+                        useNativeControls
+                        resizeMode={ResizeMode.COVER}
+                        isLooping={false}
+                      />
+                    ) : m.message_type === 'image' ? (
                       <Image source={{ uri: m.content }} style={{ width: 180, height: 180, borderRadius: 12 }} resizeMode="cover" />
                     ) : (
                       <Text className="text-white leading-5">{m.content}</Text>
@@ -263,6 +317,14 @@ export default function HomeScreen() {
                 </View>
               </View>
             ))}
+            {uploadingImg && (
+              <View className="flex-row justify-end">
+                <View className="bg-primary/70 rounded-3xl rounded-br-sm px-4 py-3 flex-row items-center gap-2">
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text className="text-white text-sm">发送中…</Text>
+                </View>
+              </View>
+            )}
             {sending && (
               <View className="flex-row items-end gap-2">
                 <View className="w-8 h-8 rounded-full bg-primary-container items-center justify-center"><MaterialCommunityIcons name="heart" size={16} color={COLORS.primary} /></View>
@@ -300,27 +362,26 @@ export default function HomeScreen() {
         <TouchableOpacity className="flex-1 bg-black/30 justify-end" activeOpacity={1} onPress={() => setQuickOpen(false)}>
           <View className="bg-surface rounded-t-3xl px-5 pt-5 pb-8" style={{ backgroundColor: COLORS.surface }}>
             <Text className="text-ink font-bold text-center">添加点什么？</Text>
-            <View className="flex-row flex-wrap gap-3 mt-4">
+            <View className="flex-row mt-5">
               {([
-                { key: 'image', label: '上传图片', icon: 'image-plus', color: '#B88466', desc: '拍照/从相册选择', onPress: pickChatImage },
-                { key: 'goal-setup', label: '设新目标', icon: 'target', color: '#8FA68E', desc: '目标设置', onPress: () => router.push('/goal-setup' as any) },
+                { key: 'photo', label: '拍照', icon: 'camera-outline', color: '#B88466', onPress: () => sendChatMedia('camera-photo') },
+                { key: 'video', label: '拍视频', icon: 'video-outline', color: '#D99A3D', onPress: () => sendChatMedia('camera-video') },
+                { key: 'library', label: '相册', icon: 'image-multiple-outline', color: '#8FA68E', onPress: () => sendChatMedia('library') },
+                { key: 'goal-setup', label: '新目标', icon: 'target', color: '#6FA05C', onPress: () => { setQuickOpen(false); router.push('/goal-setup' as any); } },
               ] as any[]).map((s: any) => (
-                <TouchableOpacity
-                  key={s.key}
-                  className="rounded-2xl p-4 border border-outline-variant"
-                  style={{ width: '47%' }}
-                  onPress={s.onPress}
-                >
-                  <View className="w-9 h-9 rounded-xl items-center justify-center" style={{ backgroundColor: s.color + '22' }}>
-                    <MaterialCommunityIcons name={s.icon} size={18} color={s.color} />
+                <TouchableOpacity key={s.key} className="flex-1 items-center" activeOpacity={0.7} onPress={s.onPress}>
+                  <View
+                    className="w-14 h-14 rounded-2xl items-center justify-center"
+                    style={{ backgroundColor: s.color + '1A', borderWidth: 1, borderColor: s.color + '33' }}
+                  >
+                    <MaterialCommunityIcons name={s.icon} size={24} color={s.color} />
                   </View>
-                  <Text className="text-ink font-semibold text-sm mt-2">{s.label}</Text>
-                  <Text className="text-ink-mute text-[11px] mt-0.5">{s.desc}</Text>
+                  <Text className="text-ink text-xs mt-2">{s.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-            {uploadingImg && <Text className="text-ink-mute text-xs text-center mt-3">图片上传中…</Text>}
-            <TouchableOpacity className="h-11 items-center justify-center mt-2" onPress={() => setQuickOpen(false)}>
+            <Text className="text-ink-faint text-[11px] text-center mt-4">拍照、拍视频需在 App 内使用；相册可选图片或视频</Text>
+            <TouchableOpacity className="h-11 items-center justify-center mt-1" onPress={() => setQuickOpen(false)}>
               <Text className="text-ink-mute text-sm">取消</Text>
             </TouchableOpacity>
           </View>
