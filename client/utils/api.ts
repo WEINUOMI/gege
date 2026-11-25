@@ -62,8 +62,28 @@ export async function uploadProof(fileUri: string, mimeType: string, fileName: s
   const file = await createFormDataFile(fileUri, fileName, mimeType);
   const formData = new FormData();
   formData.append('file', file as any);
-  const res = await fetch(`${API}/api/v1/upload/proof`, { method: 'POST', body: formData });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '上传失败');
+  let res: Response;
+  try {
+    res = await fetch(`${API}/api/v1/upload/proof`, { method: 'POST', body: formData });
+  } catch {
+    // 原生端 fetch 在此场景只会抛出笼统的 "Network request failed"，
+    // 补上实际请求地址，便于判断是地址不通还是网关中断
+    throw new Error(`上传请求未能完成（目标：${API || '同源'}/api/v1/upload/proof）`);
+  }
+  const data = await res.json().catch(() => ({}) as any);
+  if (!res.ok) throw new Error(data.error || `上传失败(${res.status})`);
   return data;
+}
+
+/**
+ * 上传凭证（Base64 + JSON 通道）
+ * 用途：原生端 multipart 上传失败时的兜底，绕开 multipart 解析链路。
+ * 接口：POST /api/v1/upload/proof-base64
+ */
+export async function uploadProofBase64(base64: string, mimeType = 'image/jpeg', fileName = 'proof.jpg') {
+  return apiPost<{ key: string; url: string; type: string; size: number }>('/api/v1/upload/proof-base64', {
+    data: base64,
+    mime: mimeType,
+    name: fileName,
+  });
 }

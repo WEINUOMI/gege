@@ -3,7 +3,9 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
-const API_BASE = (process.env.EXPO_PUBLIC_API_BASE ?? '').replace(/\/$/, '');
+// 注意：api.ts 使用的是 EXPO_PUBLIC_BACKEND_BASE_URL（由构建脚本注入），
+// 这里必须同名，否则原生端拼出的图片地址会缺少域名而无法显示。
+const API_BASE = (process.env.EXPO_PUBLIC_BACKEND_BASE_URL || process.env.EXPO_PUBLIC_API_BASE || '').replace(/\/$/, '');
 
 /**
  * 创建跨平台兼容的文件对象，用于 FormData.append()

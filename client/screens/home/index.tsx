@@ -10,7 +10,7 @@ import { COLORS } from '@/components/ui';
 import { useFocusEffect } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
 import { useSafeRouter } from '@/hooks/useSafeRouter';
-import { apiGet, apiPost, API, uploadProof } from '@/utils/api';
+import { apiGet, apiPost, API, uploadProof, uploadProofBase64 } from '@/utils/api';
 import { RichText } from '@/components/RichText';
 
 interface Msg { id: number; role: string; content: string; message_type: string; created_at: string; }
@@ -141,9 +141,15 @@ export default function HomeScreen() {
     }
     try {
       setUploadingImg(true);
-      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.7 });
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.5, base64: true });
       if (res.canceled) return;
-      const up = await uploadProof(res.assets[0].uri, 'image/jpeg', 'chat.jpg');
+      const asset = res.assets[0];
+      // 优先走 JSON(base64) 通道，失败再回退到原来的表单通道
+      let up: any = null;
+      if (asset.base64) {
+        try { up = await uploadProofBase64(asset.base64, 'image/jpeg', 'chat.jpg'); } catch { up = null; }
+      }
+      if (!up?.key) up = await uploadProof(asset.uri, 'image/jpeg', 'chat.jpg');
       await apiPost(`/api/v1/chat/${userId}/messages`, { role: 'user', content: up.url, messageType: 'image' });
       await loadMessages();
       Alert.alert('已发送', '图片已发送给暖暖，主人可以继续聊聊');

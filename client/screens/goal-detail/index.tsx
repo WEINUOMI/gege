@@ -8,7 +8,7 @@ import { Screen } from '@/components/Screen';
 import { PageHeader, PrimaryButton, COLORS } from '@/components/ui';
 import { useUser } from '@/contexts/UserContext';
 import { useSafeRouter, useSafeSearchParams } from '@/hooks/useSafeRouter';
-import { apiGet, apiPost, uploadProof } from '@/utils/api';
+import { apiGet, apiPost, uploadProof, uploadProofBase64 } from '@/utils/api';
 
 interface Goal { id: number; title: string; target_value: string; category: string; status: string; daily_points: number; }
 interface Item { id: number; title: string; category: string; planned_time: string; points: number; doneToday: boolean; }
@@ -45,9 +45,9 @@ export default function GoalDetailScreen() {
     if (Platform.OS === 'web') return pickAny(item);
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { Alert.alert('暖暖提醒', '需要相册权限才能上传打卡凭证哦'); return; }
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.7 });
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.5, base64: true });
     if (res.canceled) return;
-    await doCheckin(item, res.assets[0].uri);
+    await doCheckin(item, { base64: res.assets[0].base64, uri: res.assets[0].uri });
   };
 
   const takePhoto = async (item: Item) => {
@@ -55,30 +55,62 @@ export default function GoalDetailScreen() {
     if (Platform.OS === 'web') return pickAny(item);
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) { Alert.alert('暖暖提醒', '需要相机权限才能拍摄打卡凭证哦'); return; }
-    const res = await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 0.7 });
+    const res = await ImagePicker.launchCameraAsync({ allowsEditing: false, quality: 0.5, base64: true });
     if (res.canceled) return;
-    await doCheckin(item, res.assets[0].uri);
+    await doCheckin(item, { base64: res.assets[0].base64, uri: res.assets[0].uri });
   };
 
   // Web 端：相机权限不可用、launchCameraAsync 会卡死无法退出，统一回退到相册选择（可取消退出）
   const pickAny = async (item: Item) => {
     setCurrent(item); setCkOpen(false);
     try {
-      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.7 });
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: false, quality: 0.5 });
       if (res.canceled) return;
-      await doCheckin(item, res.assets[0].uri);
+      await doCheckin(item, { uri: res.assets[0].uri });
     } catch {
       Alert.alert('暖暖提醒', '未能打开选择器，请重试');
     }
   };
 
-  const doCheckin = async (item: Item, uri: string, isVideo = false) => {
+  /**
+   * 凭证上传双通道：
+   * 1) JSON 通道（base64）：绕开 multipart 解析链路，原生端优先走这条
+   * 2) 表单通道（multipart）：Web 端与视频凭证使用
+   * 两条都失败时把两个原因都抛出来，避免只看到笼统的 "Network request failed"
+   */
+  const uploadByAnyChannel = async (proof: { base64?: string | null; uri?: string; isVideo?: boolean }) => {
+    const isVideo = !!proof.isVideo;
+    const mime = isVideo ? 'video/mp4' : 'image/jpeg';
+    const name = isVideo ? 'proof.mp4' : 'proof.jpg';
+    const errors: string[] = [];
+    if (proof.base64) {
+      try {
+        const r = await uploadProofBase64(proof.base64, mime, name);
+        if (r?.key) return r;
+        errors.push('图片通道未返回文件标识');
+      } catch (e: any) {
+        errors.push(`图片通道：${e?.message || '失败'}`);
+      }
+    }
+    if (proof.uri) {
+      try {
+        const r = await uploadProof(proof.uri, mime, name);
+        if (r?.key) return r;
+        errors.push('表单通道未返回文件标识');
+      } catch (e: any) {
+        errors.push(`表单通道：${e?.message || '失败'}`);
+      }
+    }
+    throw new Error(errors.join('；') || '凭证上传失败');
+  };
+
+  const doCheckin = async (item: Item, proof: { base64?: string | null; uri?: string; isVideo?: boolean }) => {
     if (!userId) return;
     setUploading(true);
     try {
-      const up = await uploadProof(uri, isVideo ? 'video/mp4' : 'image/jpeg', isVideo ? 'proof.mp4' : 'proof.jpg');
+      const up = await uploadByAnyChannel(proof);
       await apiPost(`/api/v1/goals/${id}/checkins`, {
-        userId, title: item.title, planItemId: item.id, proofKey: up.key, proofType: isVideo ? 'video' : 'image',
+        userId, title: item.title, planItemId: item.id, proofKey: up.key, proofType: proof.isVideo ? 'video' : 'image',
       });
       await load();
     } catch (e: any) {
@@ -93,9 +125,9 @@ export default function GoalDetailScreen() {
     if (!current) return;
     setCkOpen(false);
     try {
-      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], quality: 0.6 });
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], quality: 0.4, videoMaxDuration: 15 });
       if (res.canceled) return;
-      await doCheckin(current, res.assets[0].uri, true);
+      await doCheckin(current, { uri: res.assets[0].uri, isVideo: true });
     } catch {
       Alert.alert('没能打开视频', '可以先改用照片凭证');
     }
@@ -109,9 +141,9 @@ export default function GoalDetailScreen() {
     try {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) { Alert.alert('需要相机权限', '开启后就能拍视频凭证'); return; }
-      const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['videos'], videoMaxDuration: 30, quality: 0.6 });
+      const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['videos'], videoMaxDuration: 15, quality: 0.4 });
       if (res.canceled) return;
-      await doCheckin(current, res.assets[0].uri, true);
+      await doCheckin(current, { uri: res.assets[0].uri, isVideo: true });
     } catch {
       Alert.alert('没能拍摄视频', '可以先改用照片凭证');
     }
